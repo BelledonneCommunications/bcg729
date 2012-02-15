@@ -1,0 +1,10 @@
+# This is a comment
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+
+Name:  libbcg729
+Description: Implement the ITU G729 speech codec. 
+Version: @PACKAGE_VERSION@                           
+Libs: -L@libdir@ -lbcg729 
+Cflags: -I@includedir@ 
