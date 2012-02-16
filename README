@@ -1,8 +1,15 @@
-bcg729 - g729 encoder and decoder implementation, and mediastreamer2 plugin interface.
+bcg729  is an opensource implementation of both encoder and decoder of the ITU G729 Annex A speech codec. 
+The library written in C 99 is fully portable and can be executed  on many platforms including both ARM  processor and x86. 
+libbcg729 supports concurrent channels encoding/decoding for multi call application such conferencing. 
+This project was initially developed as part of  Mediastreamer2, the Linphone's  media processing engine. So it also contains the glue to be integrated in Linphone/Mediastreamer2.
+ 
+Licensing: The source code is licensed under GPLv2. ITU G729 usage is governed by a patent license to be acquired from Sipro Lab
 
 By default, the upstream package installs into /usr/local.  Please use
 './configure --prefix' to change it
 
+Linphone plugin is compile if both mediastremer2 and ortp are installed
+ 
 # Tests suite:
 - Tests are defined for each functional bloc (more or less matching a source file)
 and for global encoding/decoding
