@@ -18,6 +18,10 @@ AC_ARG_ENABLE(strict,
 [wall_werror=$enableval],
 [wall_werror=yes]
 )
+# configure option to disable the tests
+AC_ARG_ENABLE([tests],
+	AS_HELP_STRING([--disable-tests], [Disable the tests]))
+	AM_CONDITIONAL([RUN_TESTS], [test "x$enable_tests" != "xno"])
 
 CFLAGS="$CFLAGS -Wall"
 
