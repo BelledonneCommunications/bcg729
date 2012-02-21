@@ -169,7 +169,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	/*** eq82 -> (correlationMax^2)/(residualSignalEnergy*delayedResidualSignalEnergy)<0.5 ***/
 	/* (correlationMax^2) < (residualSignalEnergy*delayedResidualSignalEnergy)*0.5 */
 	if ((MULT16_16(correlationMaxWord16, correlationMaxWord16) < SHR(MULT16_16(residualSignalEnergyWord16, delayedResidualSignalEnergyWord16), 1)) /* eq82 */
-		|| ((correlationMax==0) && (delayedResidualSignalEnergy==0))) { /* correlationMax and delayedResidualSignalEnergy values are 0 -> unable to compute g0 and g1 -> disable filter */
+		|| ((correlationMaxWord16==0) && (delayedResidualSignalEnergyWord16==0))) { /* correlationMax and delayedResidualSignalEnergy values are 0 -> unable to compute g0 and g1 -> disable filter */
 		/* long term post filter disabled */
 		for (i=0; i<L_SUBFRAME; i++) {
 			decoderChannelContext->longTermFilteredResidualSignal[i] = residualSignal[i];
