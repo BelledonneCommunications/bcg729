@@ -63,6 +63,7 @@ static void filter_process(MSFilter *f){
 		outputMessage = allocb(SIGNAL_FRAME_SIZE,0);
 		bcg729Decoder(obj->decoderChannelContext, NULL, 1, (int16_t *)(outputMessage->b_wptr));
 		outputMessage->b_wptr+=SIGNAL_FRAME_SIZE;
+		mblk_set_plc_flag(outputMessage, 1);
 		ms_queue_put(f->outputs[0],outputMessage);
 		ms_concealer_inc_sample_time(obj->concealer,f->ticker->time,10, 0);
 	}
