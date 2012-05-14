@@ -78,11 +78,17 @@ static void filter_uninit(MSFilter *f){
 	ms_free(f->data);
 }
 
+static int filter_have_plc(MSFilter *f, void *arg)
+{
+	*((int *)arg) = 1;
+	return 0;
+}
 
 /*filter specific method*/
 
 static MSFilterMethod filter_methods[]={
-	{	0, NULL}
+	{ 	MS_DECODER_HAVE_PLC		, 	filter_have_plc		},
+	{	0				, 	NULL			}
 };
 
 
