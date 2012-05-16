@@ -50,6 +50,7 @@ static void filter_process(MSFilter *f){
 	while((inputMessage=ms_queue_get(f->inputs[0]))) {
 		while(inputMessage->b_rptr<inputMessage->b_wptr) {
 			outputMessage = allocb(SIGNAL_FRAME_SIZE,0);
+			mblk_meta_copy(inputMessage, outputMessage);
 			bcg729Decoder(obj->decoderChannelContext, inputMessage->b_rptr, 0, (int16_t *)(outputMessage->b_wptr));
 			outputMessage->b_wptr+=SIGNAL_FRAME_SIZE;
 			inputMessage->b_rptr+=BITSTREAM_FRAME_SIZE;
