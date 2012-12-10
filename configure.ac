@@ -30,9 +30,9 @@ if test $GCC = yes && test $wall_werror = yes;  then
 fi
 
 # check for libraries that have pkg-config files installed
-PKG_CHECK_MODULES(ORTP, ortp >= 0.16.0,[found_ortp=true],foo=bar)
-PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.0.0,[found_ms2=true],foo=bar)
-AM_CONDITIONAL(BUILD_MSBCG729, test x$found_ms2 = xtrue && test x$found_ortp = xtrue)
+PKG_CHECK_MODULES(ORTP, ortp >= 0.21.0,[found_ortp=true],foo=bar)
+PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.8.99,[found_ms2=true],foo=bar)
+AM_CONDITIONAL(BUILD_MSBCG729, test x$found_ms2x$found_ortp = xtruextrue)
 
 # Create the following files from their .in counterparts
 AC_CONFIG_FILES([

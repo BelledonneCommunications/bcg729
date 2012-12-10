@@ -24,7 +24,7 @@ libbcg729_la_SOURCES=	LP2LSPConversion.c \
 			qLSP2LP.c \
 			utils.c
 
-libbcg729_la_LDFLAGS=-fvisibility=hidden
+libbcg729_la_LDFLAGS=-fvisibility=hidden -no-undefined
 
 INCLUDES= -I$(top_srcdir)/include
 
