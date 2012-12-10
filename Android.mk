@@ -3,6 +3,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libbcg729
 
+LOCAL_ARM_MODE := arm
 
 LOCAL_SRC_FILES =       src/LP2LSPConversion.c \
                         src/LPSynthesisFilter.c \
