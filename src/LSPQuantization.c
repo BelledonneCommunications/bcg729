@@ -53,16 +53,23 @@ void initLSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContex
 void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, word16_t LSPCoefficients[], word16_t qLSPCoefficients[], uint16_t parameters[])
 {
 	int i,j;
+	word16_t LSF[NB_LSP_COEFF]; /* LSF coefficients in Q2.13 range [0, Pi[ */
+	word16_t weights[NB_LSP_COEFF]; /* weights in Q11 */
+	word16_t weightsThreshold[NB_LSP_COEFF]; /* store in Q13 the threshold used to compute the weights */
+	int L0;
+	word32_t weightedMeanSquareError[L0_RANGE];
+	word16_t L1index[L0_RANGE];
+	word16_t L2index[L0_RANGE];
+	word16_t L3index[L0_RANGE];
+	word16_t quantizerOutput[NB_LSP_COEFF];
+	word16_t qLSF[NB_LSP_COEFF];
 
 	/*** compute LSF in Q2.13 : lsf = arcos(lsp) range [0, Pi[ spec 3.2.4 eq18 ***/
-	word16_t LSF[NB_LSP_COEFF]; /* LSF coefficients in Q2.13 range [0, Pi[ */
 	for (i=0; i<NB_LSP_COEFF; i++)  {
 		LSF[i] = g729Acos_Q15Q13(LSPCoefficients[i]);
 	}
 
 	/*** compute the weights vector as in spec 3.2.4 eq22 ***/
-	word16_t weights[NB_LSP_COEFF]; /* weights in Q11 */
-	word16_t weightsThreshold[NB_LSP_COEFF]; /* store in Q13 the threshold used to compute the weights */
 	weightsThreshold[0] = SUB16(LSF[1], OO4PIPLUS1_IN_Q13);
 	for (i=1; i<NB_LSP_COEFF-1; i++) {
 		weightsThreshold[i] = SUB16(SUB16(LSF[i+1], LSF[i-1]), ONE_IN_Q13);
@@ -81,16 +88,12 @@ void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, w
 	weights[5] = MULT16_16_Q14(weights[5], ONE_POINT_2_IN_Q14);
 
 	/*** compute the coefficients for the two MA Predictors ***/
-	int L0;
-	word32_t weightedMeanSquareError[L0_RANGE];
-	word16_t L1index[L0_RANGE];
-	word16_t L2index[L0_RANGE];
-	word16_t L3index[L0_RANGE];
-
 	for (L0=0; L0<L0_RANGE; L0++) {
-
 		/* compute the target Vector (l) to be quantized as in spec 3.2.4 eq23 */
 		word16_t targetVector[NB_LSP_COEFF]; /* vector to be quantized in Q13 */
+		word32_t meanSquareDiff = MAXINT32;
+		word16_t quantizedVector[NB_LSP_COEFF]; /* in Q13, the current state of quantized vector */
+
 		for (i=0; i<NB_LSP_COEFF; i++) {
 			word32_t acc = SHL(LSF[i],15); /* acc in Q2.28 */
 			for (j=0; j<MA_MAX_K; j++) {
@@ -100,7 +103,6 @@ void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, w
 		}
 
 		/* find closest match for predictionError (minimize mean square diff) in L1 codebook */
-		word32_t meanSquareDiff = MAXINT32;
 		for (i=0; i<L1_RANGE; i++) {
 			word32_t acc = 0;
 			for (j=0; j<NB_LSP_COEFF; j++) {
@@ -154,7 +156,6 @@ void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, w
 
 		/* compute the quantized vector L1+L2/L3 and rearrange it as specified in spec 3.2.4(first the higher part (L2) and then the lower part (L3)) */
 		/* Note: according to the spec, the rearrangement shall be done on each candidate while looking for best match, but the ITU code does it after picking the best match and so we do */
-		word16_t quantizedVector[NB_LSP_COEFF]; /* in Q13, the current state of quantized vector */
 		for (i=0; i<NB_LSP_COEFF/2; i++) {
 			quantizedVector[i] = ADD16(L1[L1index[L0]][i], L2L3[L2index[L0]][i]);
 		}
@@ -206,8 +207,6 @@ void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, w
 	}
 
 	/*** Compute the quantized LSF from the L coefficients ***/
-	word16_t quantizerOutput[NB_LSP_COEFF];
-	word16_t qLSF[NB_LSP_COEFF];
 	/* reconstruct vector from the codebooks using the selected parameters spec 3.2.4 eq19 */
 	for (i=0; i<NB_LSP_COEFF/2; i++) {
 		quantizerOutput[i] = ADD16(L1[parameters[1]][i], L2L3[parameters[2]][i]); /* codebooks are in Q2.13 for L1 and Q0.13 for L2L3, due to actual values stored in the codebooks, result in Q2.13 */

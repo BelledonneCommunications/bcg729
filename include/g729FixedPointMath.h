@@ -59,7 +59,7 @@
 /*      - the log2(x) in Q16 on 32 bits                                      */
 /*                                                                           */
 /*****************************************************************************/
-static inline word32_t g729Log2_Q0Q16(word32_t x)
+static BCG729_INLINE word32_t g729Log2_Q0Q16(word32_t x)
 {
 	/* first get the integer part and put it in the 16 MSB of return value (in Q16) */
 	uint16_t leadingZeros = countLeadingZeros(x); /* note: MSB is excluded as considered as sign bit */
@@ -103,7 +103,7 @@ static inline word32_t g729Log2_Q0Q16(word32_t x)
 /*      - exp2(x) in Q16 on 32 bits                                          */
 /*                                                                           */
 /*****************************************************************************/
-static inline word32_t g729Exp2_Q11Q16(word16_t x)
+static BCG729_INLINE word32_t g729Exp2_Q11Q16(word16_t x)
 {
 	int integer;
 	word16_t frac;
@@ -134,11 +134,12 @@ static inline word32_t g729Exp2_Q11Q16(word16_t x)
 /*      - sqrt(x) in Q7 on 32 bits                                           */
 /*                                                                           */
 /*****************************************************************************/
-static inline word32_t g729Sqrt_Q0Q7(word32_t x)
+static BCG729_INLINE word32_t g729Sqrt_Q0Q7(word32_t x)
 {
-	if (x==0) return 0;
 	int k;
 	word32_t rt;
+
+	if (x==0) return 0;
 	/* set x in Q14 in range [0.25,1[ */
 	k = (18-countLeadingZeros(x))>>1;
 	x = VSHR32(x, (k<<1)); /* x = x.2^-2k */
@@ -159,7 +160,7 @@ static inline word32_t g729Sqrt_Q0Q7(word32_t x)
 /*      - 1/sqrt(x) in Q31 on 32 bits in range [43341/2^31, MAXINT32]        */
 /*                                                                           */
 /*****************************************************************************/
-static inline word32_t g729InvSqrt_Q0Q31(word32_t x)
+static BCG729_INLINE word32_t g729InvSqrt_Q0Q31(word32_t x)
 {
 	if (x==1) return MAXINT32;
 	return (word32_t)(DIV32_32_Q24(g729Sqrt_Q0Q7(x),x)); /* sqrt(x) in Q7 + Q24 -> Q31 */
@@ -185,7 +186,7 @@ static inline word32_t g729InvSqrt_Q0Q31(word32_t x)
 /*      - cos(x) in Q0.15 on 16 bits in range [-1, 1[                        */
 /*                                                                           */
 /*****************************************************************************/
-static inline word16_t g729Cos_Q13Q15(word16_t x)
+static BCG729_INLINE word16_t g729Cos_Q13Q15(word16_t x)
 {
 	/* input var x in Q2.13 and in ]0, Pi[ */
 	word16_t x2,xScaled; 
@@ -231,22 +232,22 @@ static inline word16_t g729Cos_Q13Q15(word16_t x)
 /*      - atan(x) in Q2.13 on 16 bits in range ]-Pi/2(12868), Pi/2(12868)[   */
 /*                                                                           */
 /*****************************************************************************/
-static inline word16_t g729Atan_Q15Q13(word32_t x)
+static BCG729_INLINE word16_t g729Atan_Q15Q13(word32_t x)
 {
 	/* constants for rational polynomial */
 	word32_t angle;
 	word16_t x2;
 	int highSegment = 0;
+	int sign = 0;
+	int complement = 0;
 
 	/* make argument positive */
-	int sign = 0;
 	if (x < 0) {
 		x = NEG16(x);
 		sign = 1;
 	}
 	
 	/* limit argument to 0..1 */
-	int complement = 0;
 	if(x > ONE_IN_Q15){
 		complement = 1;
 		x = DIV32(ONE_IN_Q30, x); /* 1/x in Q15 */
@@ -295,7 +296,7 @@ static inline word16_t g729Atan_Q15Q13(word32_t x)
 /*      - asin(x) in Q2.13 on 16 bits in range ]-Pi/2(12868), Pi/2(12868)[   */
 /*                                                                           */
 /*****************************************************************************/
-static inline word16_t g729Asin_Q15Q13(word16_t x)
+static BCG729_INLINE word16_t g729Asin_Q15Q13(word16_t x)
 {
 	return g729Atan_Q15Q13(DIV32(SHL(x,15), PSHR(g729Sqrt_Q0Q7(SUB32(ONE_IN_Q30, MULT16_16(x,x))),7))); /*  atan(x/sqrt(1.0 - x*x)) */
 }
@@ -308,7 +309,7 @@ static inline word16_t g729Asin_Q15Q13(word16_t x)
 /*      - acos(x) in Q2.13 on 16 bits in range ]0, Pi(25736)[                */
 /*                                                                           */
 /*****************************************************************************/
-static inline word16_t g729Acos_Q15Q13(word16_t x)
+static BCG729_INLINE word16_t g729Acos_Q15Q13(word16_t x)
 {
 	return(HALF_PI_Q13 - g729Asin_Q15Q13(x));
 }

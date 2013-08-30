@@ -37,11 +37,18 @@
 void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[])
 {
 	int i,j;
+	word16_t windowedSignal[L_LP_ANALYSIS_WINDOW];
+	word32_t autoCorrelationCoefficient[NB_LSP_COEFF+1];
+	word64_t acc64=0; /* acc on 64 bits */ 
+	int rightShiftToNormalise=0;
+	word32_t previousIterationLPCoefficients[NB_LSP_COEFF+1]; /* to compute a[]*/
+	word32_t LPCoefficients[NB_LSP_COEFF+1]; /* in Q4.27 */
+	word32_t sum = 0; /* in Q27 */
+	word32_t E = 0; /* in Q31 */
 
 	/*********************************************************************/
 	/* Compute the windowed signal according to spec 3.2.1 eq4           */
 	/*********************************************************************/
-	word16_t windowedSignal[L_LP_ANALYSIS_WINDOW];
 	for (i=0; i<L_LP_ANALYSIS_WINDOW; i++) {
 		windowedSignal[i] = MULT16_16_P15(signal[i], wlp[i]); /* signal in Q0, wlp in Q0.15, windowedSignal in Q0 */
 	}
@@ -49,11 +56,9 @@ void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[])
 	/*********************************************************************************/
 	/* Compute the autoCorrelation coefficients r[0..10] according to spec 3.2.1 eq5 */
 	/*********************************************************************************/
-	word32_t autoCorrelationCoefficient[NB_LSP_COEFF+1];
 	/* Compute autoCorrelationCoefficient[0] first as it is the highest number and normalise it on 32 bits then apply the same normalisation to the other coefficients */
 	/* autoCorrelationCoefficient are normalised on 32 bits and then considered as Q31 in range [-1,1[ */
 	/* autoCorrelationCoefficient[0] is computed on 64 bits as it is likely to overflow 32 bits */
-	word64_t acc64=0; /* acc on 64 bits */ 
 	for (i=0; i<L_LP_ANALYSIS_WINDOW; i++) {
 		acc64 = MAC64(acc64, windowedSignal[i], windowedSignal[i]);
 	}
@@ -61,7 +66,6 @@ void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[])
 		acc64 = 1; /* spec 3.2.1: To avoid arithmetic problems for low-level input signals the value of r(0) has a lower boundary of r(0) = 1.0 */
 	}
 	/* normalise the acc64 on 32 bits */
-	int rightShiftToNormalise=0;
 	if (acc64>MAXINT32) {
 		do {
 			acc64 = SHR(acc64,1);
@@ -125,11 +129,6 @@ void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[])
 	/*            set to Q27 at the end of current iteration                         */
 	/*                                                                               */
 	/*********************************************************************************/
-	word32_t previousIterationLPCoefficients[NB_LSP_COEFF+1]; /* to compute a[]*/
-	word32_t LPCoefficients[NB_LSP_COEFF+1]; /* in Q4.27 */
-
-	word32_t sum = 0; /* in Q27 */
-	word32_t E = 0; /* in Q31 */
 	/* init */
 	LPCoefficients[0] = ONE_IN_Q27;
 	LPCoefficients[1] = -DIV32_32_Q27(autoCorrelationCoefficient[1], autoCorrelationCoefficient[0]); /* result in Q27(but<1) */

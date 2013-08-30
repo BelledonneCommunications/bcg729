@@ -47,6 +47,8 @@ void computeWeightedSpeech(word16_t inputSignal[], word16_t qLPCoefficients[], w
 	/* finally get the weightedInputSignal[n] = LPResidualSignal[n] - ∑(i=1..10)qLP'[i]*weightedInputSignal[n-i] spec A3.3.3 eqA.2 */
 
 	int i,j;
+	word16_t weightedqLPLowPassCoefficients[NB_LSP_COEFF]; /* in Q12 */
+
 	/*** compute LPResisualSignal (spec A3.3.3 eqA.3) in Q0 ***/
 	/* compute residual signal for the first subframe: use the first 10 qLPCoefficients */
 	for (i=0; i<L_SUBFRAME; i++) {
@@ -67,7 +69,6 @@ void computeWeightedSpeech(word16_t inputSignal[], word16_t qLPCoefficients[], w
 
 	/*** compute weightedqLPLowPassCoefficients and weightedInputSignal for first subframe ***/
 	/* spec A3.3.3 a' = weightedqLPLowPassCoefficients[i] =  weightedqLP[i] - 0.7*weightedqLP[i-1] */
-	word16_t weightedqLPLowPassCoefficients[NB_LSP_COEFF]; /* in Q12 */
 	weightedqLPLowPassCoefficients[0] = SUB16(weightedqLPCoefficients[0],O7_IN_Q12); /* weightedqLP[-1] = 1 -> weightedqLPLowPassCoefficients[0] =  weightedqLPCoefficients[0] - 0.7 */
 	for (i=1; i<NB_LSP_COEFF; i++) {
 		weightedqLPLowPassCoefficients[i] = SUB16(weightedqLPCoefficients[i], MULT16_16_Q12(weightedqLPCoefficients[i-1], O7_IN_Q12));

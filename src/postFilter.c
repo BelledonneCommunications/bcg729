@@ -58,12 +58,31 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 		word16_t *postFilteredSignal)
 {
 	int i,j;
+	word16_t LPGammaNCoefficients[NB_LSP_COEFF]; /* in Q12 */
+	word16_t *residualSignal;
+	word16_t *scaledResidualSignal;
+	word32_t correlationMax = (word32_t)MININT32;
+	int16_t intPitchDelayMax;
+	int16_t bestIntPitchDelay = 0;
+	word16_t *delayedResidualSignal;
+	word32_t residualSignalEnergy = 0; /* in Q-4 */
+	word32_t delayedResidualSignalEnergy = 0; /* in Q-4 */
+	word32_t maximumThree;
+	int16_t leadingZeros = 0;
+	word16_t correlationMaxWord16 = 0;
+	word16_t residualSignalEnergyWord16 = 0;
+	word16_t delayedResidualSignalEnergyWord16 = 0;
+	word16_t LPGammaDCoefficients[NB_LSP_COEFF]; /* in Q12 */
+	word16_t hf[22]; /* the truncated impulse response to short term filter Hf in Q12 */
+	word32_t rh1;
+	word16_t tiltCompensatedSignal[L_SUBFRAME]; /* in Q0 */
+	word16_t gainScalingFactor; /* in Q12 */
+	word32_t shortTermFilteredResidualSignalSquareSum = 0;
 
 	/********************************************************************/
 	/* Long Term Post Filter                                            */
 	/********************************************************************/
 	/*** Compute LPGammaN and LPGammaD coefficients : LPGamma[0] = LP[0]*Gamma^(i+1) (i=0..9) ***/
-	word16_t LPGammaNCoefficients[NB_LSP_COEFF]; /* in Q12 */
 	/* GAMMA_XX constants are in Q15 */
 	LPGammaNCoefficients[0] = MULT16_16_P15(LPCoefficients[0], GAMMA_N1);
 	LPGammaNCoefficients[1] = MULT16_16_P15(LPCoefficients[1], GAMMA_N2);
@@ -80,8 +99,8 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	/* Compute also a scaled residual signal: shift right by 2 to avoid overflows on 32 bits when computing correlation and energy */
 	
 	/* pointers to current subframe beginning */
-	word16_t *residualSignal = &(decoderChannelContext->residualSignalBuffer[MAXIMUM_INT_PITCH_DELAY+subframeIndex]);
-	word16_t *scaledResidualSignal = &(decoderChannelContext->scaledResidualSignalBuffer[MAXIMUM_INT_PITCH_DELAY+subframeIndex]);
+	residualSignal = &(decoderChannelContext->residualSignalBuffer[MAXIMUM_INT_PITCH_DELAY+subframeIndex]);
+	scaledResidualSignal = &(decoderChannelContext->scaledResidualSignalBuffer[MAXIMUM_INT_PITCH_DELAY+subframeIndex]);
 
 	for (i=0; i<L_SUBFRAME; i++) {
 		word32_t acc = SHL((word32_t)reconstructedSpeech[i], 12); /* reconstructedSpeech in Q0 shifted to set acc in Q12 */
@@ -94,10 +113,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 
 	/*** Compute the maximum correlation on scaledResidualSignal delayed by intPitchDelay +/- 3 to get the best delay. Spec 4.2.1 eq80 ***/
 	/* using a scaled(Q-2) signals gives correlation in Q-4. */
-	word32_t correlationMax = (word32_t)MININT32;
-	int16_t intPitchDelayMax = intPitchDelay+3; /* intPitchDelayMax shall be < MAXIMUM_INT_PITCH_DELAY(143) */
-	int16_t bestIntPitchDelay = 0;
-	word16_t *delayedResidualSignal;
+	intPitchDelayMax = intPitchDelay+3; /* intPitchDelayMax shall be < MAXIMUM_INT_PITCH_DELAY(143) */
 	if (intPitchDelayMax>MAXIMUM_INT_PITCH_DELAY) {
 		intPitchDelayMax = MAXIMUM_INT_PITCH_DELAY;
 	}
@@ -123,8 +139,6 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	}
 
 	/*** Compute the signal energy ∑r(n)*r(n) and delayed signal energy ∑rk(n)*rk(n) which shall be used to compute gl spec 4.2.1 eq81, eq 82 and eq83 ***/
-	word32_t residualSignalEnergy = 0; /* in Q-4 */
-	word32_t delayedResidualSignalEnergy = 0; /* in Q-4 */
 	delayedResidualSignal = &(scaledResidualSignal[-bestIntPitchDelay]); /* in Q-2, points to the residual signal delayed to give the higher correlation: rk(n) */ 
 	for (i=0; i<L_SUBFRAME; i++) {
 		residualSignalEnergy = MAC16_16(residualSignalEnergy, scaledResidualSignal[i], scaledResidualSignal[i]);
@@ -135,18 +149,13 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	/* these variables must fit on 16bits for the following computation, to avoid loosing information, scale them */
 	/* at best fit: scale the higher of three to get the value over 2^14 and shift the other two from the same amount */
 	/* Note: all three value are >= 0 */
-	word32_t maximumThree = correlationMax;
+	maximumThree = correlationMax;
 	if (maximumThree<residualSignalEnergy) {
 		maximumThree = residualSignalEnergy;
 	}
 	if (maximumThree<delayedResidualSignalEnergy) {
 		maximumThree = delayedResidualSignalEnergy;
 	}
-
-	int16_t leadingZeros = 0;
-	word16_t correlationMaxWord16 = 0;
-	word16_t residualSignalEnergyWord16 = 0;
-	word16_t delayedResidualSignalEnergyWord16 = 0;
 
 	if (maximumThree>0) { /* if all of them a null, just do nothing otherwise shift right to get the max number in range [0x4000,0x8000[ */
 		leadingZeros = countLeadingZeros(maximumThree);
@@ -200,7 +209,6 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 
 	/* compute hf the truncated (to 22 coefficients) impulse response of the filter A(z/γn)/A(z/γd) described in spec 4.2.2 eq84 */
 	/* hf(i) = LPGammaNCoeff[i] - ∑[j:0..9]LPGammaDCoeff[j]*hf[i-j-1]) */
-	word16_t LPGammaDCoefficients[NB_LSP_COEFF]; /* in Q12 */
 	/* GAMMA_XX constants are in Q15 */
 	LPGammaDCoefficients[0] = MULT16_16_P15(LPCoefficients[0], GAMMA_D1);
 	LPGammaDCoefficients[1] = MULT16_16_P15(LPCoefficients[1], GAMMA_D2);
@@ -213,7 +221,6 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	LPGammaDCoefficients[8] = MULT16_16_P15(LPCoefficients[8], GAMMA_D9);
 	LPGammaDCoefficients[9] = MULT16_16_P15(LPCoefficients[9], GAMMA_D10);
 
-	word16_t hf[22]; /* the truncated impulse response to short term filter Hf in Q12 */
 	hf[0] = 4096; /* 1 in Q12 as LPGammaNCoefficients and LPGammaDCoefficient doesn't contain the first element which is 1 and past values of hf are 0 */
 	for (i=1; i<11; i++) {
 		word32_t acc = (word32_t)SHL(LPGammaNCoefficients[i-1],12); /* LPGammaNCoefficients in Q12 -> acc in Q24 */
@@ -233,22 +240,22 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	/* hf is then used to compute k'1 spec 4.2.3 eq87: k'1 = -rh1/rh0 */
 	/* rh0 = ∑[i:0..21]hf[i]*hf[i] */
 	/* rh1 = ∑[i:0..20]hf[i]*hf[i+1] */
-	word32_t rh1 = MULT16_16(hf[0], hf[1]);
+	rh1 = MULT16_16(hf[0], hf[1]);
 	for (i=1; i<21; i++) {
 		rh1 = MAC16_16(rh1, hf[i], hf[i+1]); /* rh1 in Q24 */
 	}
 
 	/* tiltCompensationGain is set to 0 if k'1>0 -> rh1<0 (as rh0 is always>0) */
-	word16_t tiltCompensatedSignal[L_SUBFRAME]; /* in Q0 */
 	if (rh1<0) { /* tiltCompensationGain = 0 -> no gain filter is off, just copy the input */
 		memcpy(tiltCompensatedSignal, decoderChannelContext->longTermFilteredResidualSignal, L_SUBFRAME*sizeof(word16_t));
 	} else { /*compute tiltCompensationGain = k'1*γt */
+		word16_t tiltCompensationGain;
 		word32_t rh0 = MULT16_16(hf[0], hf[0]);
 		for (i=1; i<22; i++) {
 			rh0 = MAC16_16(rh0, hf[i], hf[i]); /* rh0 in Q24 */
 		}
 		rh1 = MULT16_32_Q15(GAMMA_T, rh1); /* GAMMA_T in Q15, rh1 in Q24*/
-		word16_t tiltCompensationGain = (word16_t)SATURATE((word32_t)(DIV32(rh1,PSHR(rh0,12))), MAXINT16); /* rh1 in Q24, PSHR(rh0,12) in Q12 -> tiltCompensationGain in Q12 */
+		tiltCompensationGain = (word16_t)SATURATE((word32_t)(DIV32(rh1,PSHR(rh0,12))), MAXINT16); /* rh1 in Q24, PSHR(rh0,12) in Q12 -> tiltCompensationGain in Q12 */
 		
 		/* compute filter Ht (spec A.4.2.3 eqA14) = 1 + gain*z(-1) */
 		for (i=0; i<L_SUBFRAME; i++) {
@@ -274,9 +281,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	/********************************************************************/
 
 	/*** compute G(gain scaling factor) according to eqA15 : G = Sqrt((∑s(n)^2)/∑sf(n)^2 ) ***/
-	word16_t gainScalingFactor; /* in Q12 */
 	/* compute ∑sf(n)^2 scale the signal shifting left by 2 to avoid overflow on 32 bits sum */
-	word32_t shortTermFilteredResidualSignalSquareSum = 0;
 	for (i=0; i<L_SUBFRAME; i++) {
 		shortTermFilteredResidualSignalSquareSum = MAC16_16_Q4(shortTermFilteredResidualSignalSquareSum, decoderChannelContext->shortTermFilteredResidualSignal[i], decoderChannelContext->shortTermFilteredResidualSignal[i]);
 	}
@@ -289,7 +294,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 			postFilteredSignal[i] = decoderChannelContext->shortTermFilteredResidualSignal[i];
 		}
 	} else { /* we can compute adaptativeGain and output signal */
-
+		word16_t currentAdaptativeGain;
 		/* compute ∑s(n)^2 scale the signal shifting left by 2 to avoid overflow on 32 bits sum */
 		word32_t reconstructedSpeechSquareSum = 0;
 		for (i=0; i<L_SUBFRAME; i++) {
@@ -299,14 +304,15 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 		if (reconstructedSpeechSquareSum==0) { /* numerator is null -> current gain is null */
 			gainScalingFactor = 0;	
 		} else {
+			word32_t fractionResult; /* stores  ∑s(n)^2)/∑sf(n)^2 */
+			word32_t scaledShortTermFilteredResidualSignalSquareSum;
 			/* Compute ∑s(n)^2)/∑sf(n)^2  result shall be in Q10 */
 			/* normalise the numerator on 32 bits */
 			word16_t numeratorShift = countLeadingZeros(reconstructedSpeechSquareSum);
 			reconstructedSpeechSquareSum = SHL(reconstructedSpeechSquareSum, numeratorShift); /* reconstructedSpeechSquareSum*2^numeratorShift */
 
 			/* normalise denominator to get the result directly in Q10 if possible */
-			word32_t fractionResult; /* stores  ∑s(n)^2)/∑sf(n)^2 */
-			word32_t scaledShortTermFilteredResidualSignalSquareSum = VSHR32(shortTermFilteredResidualSignalSquareSum, 10-numeratorShift); /* shortTermFilteredResidualSignalSquareSum*2^(numeratorShift-10)*/
+			scaledShortTermFilteredResidualSignalSquareSum = VSHR32(shortTermFilteredResidualSignalSquareSum, 10-numeratorShift); /* shortTermFilteredResidualSignalSquareSum*2^(numeratorShift-10)*/
 			
 			if (scaledShortTermFilteredResidualSignalSquareSum==0) {/* shift might have sent to zero the denominator */
 				fractionResult = DIV32(reconstructedSpeechSquareSum, shortTermFilteredResidualSignalSquareSum); /* result in QnumeratorShift */
@@ -324,7 +330,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 		/* Compute the signal according to eq89 (spec 4.2.4 and section A4.2.4) */
 		/* currentGain = 0.9*previousGain + 0.1*gainScalingFactor the 0.1 factor has already been integrated in the variable gainScalingFactor */
 		/* outputsignal = currentGain*shortTermFilteredResidualSignal */
-		word16_t currentAdaptativeGain = decoderChannelContext->previousAdaptativeGain;
+		currentAdaptativeGain = decoderChannelContext->previousAdaptativeGain;
 		for (i=0; i<L_SUBFRAME; i++) {
 			currentAdaptativeGain = ADD16(gainScalingFactor, MULT16_16_P15(currentAdaptativeGain, 29491)); /* 29492 = 0.9 in Q15, result in Q12 */
 			postFilteredSignal[i] = MULT16_16_Q12(currentAdaptativeGain, decoderChannelContext->shortTermFilteredResidualSignal[i]);

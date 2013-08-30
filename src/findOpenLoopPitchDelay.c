@@ -48,15 +48,28 @@ uint16_t findOpenLoopPitchDelay(word16_t weightedInputSignal[])
 	/*** scale the signal to avoid overflows ***/
 	word16_t scaledWeightedInputSignalBuffer[MAXIMUM_INT_PITCH_DELAY+L_FRAME]; /* this buffer might store the scaled version of input Signal, if scaling is not needed, it is not used */
 	word16_t *scaledWeightedInputSignal; /* points to the begining of present frame either scaled or directly the input signal */
+	word64_t autocorrelation = 0;
+	uint16_t indexRange1=0, indexRange2=0, indexRange3Even=0, indexRange3;
+	word32_t correlationMaxRange1;
+	word32_t correlationMaxRange2;
+	word32_t correlationMaxRange3;
+	word32_t correlationMaxRange3Odd;
+	word32_t autoCorrelationRange1;
+	word32_t autoCorrelationRange2;
+	word32_t autoCorrelationRange3;
+	word32_t normalisedCorrelationMaxRange1;
+	word32_t normalisedCorrelationMaxRange2;
+	word32_t normalisedCorrelationMaxRange3;
+	uint16_t indexMultiple;
 
 	/* compute on 64 bits the autocorrelation on the input signal and if needed scale to have it on 32 bits */
-	word64_t autocorrelation = 0;
 	for (i=-MAXIMUM_INT_PITCH_DELAY; i<L_FRAME; i++) {
 		autocorrelation = MAC64(autocorrelation, weightedInputSignal[i], weightedInputSignal[i]);
 	}
 	if (autocorrelation>MAXINT32) {
+		int overflowScale;
 		scaledWeightedInputSignal = &(scaledWeightedInputSignalBuffer[MAXIMUM_INT_PITCH_DELAY]);
-		int overflowScale = PSHR(31-countLeadingZeros((word32_t)(autocorrelation>>31)),1); /* count number of bits needed over the 31 bits allowed and divide by 2 to get the right scaling for the signal */
+		overflowScale = PSHR(31-countLeadingZeros((word32_t)(autocorrelation>>31)),1); /* count number of bits needed over the 31 bits allowed and divide by 2 to get the right scaling for the signal */
 		for (i=-MAXIMUM_INT_PITCH_DELAY; i<L_FRAME; i++) {
 			scaledWeightedInputSignal[i] = SHR(weightedInputSignal[i], overflowScale);
 		}
@@ -67,13 +80,11 @@ uint16_t findOpenLoopPitchDelay(word16_t weightedInputSignal[])
 
 
 	/*** compute the correlationMax in the different ranges ***/
-	uint16_t indexRange1=0, indexRange2=0, indexRange3Even=0, indexRange3;
-	word32_t correlationMaxRange1 = getCorrelationMax(&indexRange1, scaledWeightedInputSignal, 20, 39, 1);
-	word32_t correlationMaxRange2 = getCorrelationMax(&indexRange2, scaledWeightedInputSignal, 40, 79, 1);
-	word32_t correlationMaxRange3 = getCorrelationMax(&indexRange3Even, scaledWeightedInputSignal, 80, 143, 2);
+	correlationMaxRange1 = getCorrelationMax(&indexRange1, scaledWeightedInputSignal, 20, 39, 1);
+	correlationMaxRange2 = getCorrelationMax(&indexRange2, scaledWeightedInputSignal, 40, 79, 1);
+	correlationMaxRange3 = getCorrelationMax(&indexRange3Even, scaledWeightedInputSignal, 80, 143, 2);
 	indexRange3 = indexRange3Even;
 	/* for the third range, correlationMax shall be computed at +1 and -1 around the maximum found as described in spec A3.4 */
-	word32_t correlationMaxRange3Odd;
 	if (indexRange3>80) { /* don't test value out of range [80, 143] */
 		correlationMaxRange3Odd = getCorrelation(scaledWeightedInputSignal, indexRange3-1);
 		if (correlationMaxRange3Odd>correlationMaxRange3) {
@@ -88,9 +99,9 @@ uint16_t findOpenLoopPitchDelay(word16_t weightedInputSignal[])
 	}
 
 	/*** normalise the correlations ***/
-	word32_t autoCorrelationRange1 = getCorrelation(&(scaledWeightedInputSignal[-indexRange1]), 0);
-	word32_t autoCorrelationRange2 = getCorrelation(&(scaledWeightedInputSignal[-indexRange2]), 0);
-	word32_t autoCorrelationRange3 = getCorrelation(&(scaledWeightedInputSignal[-indexRange3]), 0);
+	autoCorrelationRange1 = getCorrelation(&(scaledWeightedInputSignal[-indexRange1]), 0);
+	autoCorrelationRange2 = getCorrelation(&(scaledWeightedInputSignal[-indexRange2]), 0);
+	autoCorrelationRange3 = getCorrelation(&(scaledWeightedInputSignal[-indexRange3]), 0);
 	if (autoCorrelationRange1==0) {
 		autoCorrelationRange1 = 1; /* avoid division by 0 */
 	}
@@ -102,15 +113,15 @@ uint16_t findOpenLoopPitchDelay(word16_t weightedInputSignal[])
 	}
 
 	/* according to ITU code comments, the normalisedCorrelationMax values fit on 16 bits when in Q0, so keep them in Q8 on 32 bits shall not give any overflow */
-	word32_t normalisedCorrelationMaxRange1 = MULT32_32_Q23(correlationMaxRange1, g729InvSqrt_Q0Q31(autoCorrelationRange1));
-	word32_t normalisedCorrelationMaxRange2 = MULT32_32_Q23(correlationMaxRange2, g729InvSqrt_Q0Q31(autoCorrelationRange2));
-	word32_t normalisedCorrelationMaxRange3 = MULT32_32_Q23(correlationMaxRange3, g729InvSqrt_Q0Q31(autoCorrelationRange3));
+	normalisedCorrelationMaxRange1 = MULT32_32_Q23(correlationMaxRange1, g729InvSqrt_Q0Q31(autoCorrelationRange1));
+	normalisedCorrelationMaxRange2 = MULT32_32_Q23(correlationMaxRange2, g729InvSqrt_Q0Q31(autoCorrelationRange2));
+	normalisedCorrelationMaxRange3 = MULT32_32_Q23(correlationMaxRange3, g729InvSqrt_Q0Q31(autoCorrelationRange3));
 
 
 
 	/*** Favouring the delays with the values in the lower range ***/
 	/* not clearly documented in spec A3.4, algo from the ITU code */
-	uint16_t indexMultiple = SHL(indexRange2,1); /* indexMultiple = 2*indexRange2 */
+	indexMultiple = SHL(indexRange2,1); /* indexMultiple = 2*indexRange2 */
 	if( abs(indexMultiple - indexRange3) < 5) { /* 2*indexRange2 - indexRange3 < 5 */
 		normalisedCorrelationMaxRange2 = ADD32(normalisedCorrelationMaxRange2, SHR(normalisedCorrelationMaxRange3,2)); /* Max2 += Max3*0.25 */
 	}

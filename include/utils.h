@@ -21,6 +21,13 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#ifdef _MSC_VER
+#define BCG729_INLINE __inline
+#else
+#define BCG729_INLINE inline
+#endif
+
+
 /*****************************************************************************/
 /* insertionSort : sort an array in growing order using insertion algorithm  */
 /*    parameters :                                                           */
@@ -87,10 +94,10 @@ void correlateVectors (word16_t x[], word16_t y[], word32_t c[]);
 /*      - number of heading zeros(MSB excluded. Ex: 0x0080 00000 returns 7)  */
 /*                                                                           */
 /*****************************************************************************/
-static inline uint16_t countLeadingZeros(word32_t x)
+static BCG729_INLINE uint16_t countLeadingZeros(word32_t x)
 {
-	if (x==0) return 31;
 	uint16_t leadingZeros = 0;
+	if (x==0) return 31;
 	while (x<(word32_t)0x40000000) {
 		leadingZeros++;
 		x <<=1;

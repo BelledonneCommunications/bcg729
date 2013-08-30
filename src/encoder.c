@@ -108,6 +108,13 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 	word16_t qLSPCoefficients[NB_LSP_COEFF]; /* the quantized LSP coefficients in Q15 */
 	word16_t interpolatedqLSP[NB_LSP_COEFF]; /* the interpolated qLSP used for first subframe in Q15 */
 
+	uint16_t openLoopPitchDelay;
+	int16_t intPitchDelayMin;
+	int16_t intPitchDelayMax;
+	int subframeIndex;
+	int LPCoefficientsIndex = 0;
+	int parametersIndex = 4; /* index to insert parameters in the parameters output array */
+	word16_t impulseResponseInput[L_SUBFRAME]; /* input buffer for the impulse response computation: in Q12, 1 followed by all zeros see spec A3.5*/
 
 	/*****************************************************************************************/
 	/*** on frame basis : preProcessing, LP Analysis, Open-loop pitch search               ***/
@@ -162,14 +169,14 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 	computeWeightedSpeech(encoderChannelContext->signalCurrentFrame, qLPCoefficients, weightedqLPCoefficients, &(encoderChannelContext->weightedInputSignal[MAXIMUM_INT_PITCH_DELAY]), &(encoderChannelContext->excitationVector[L_PAST_EXCITATION])); /* weightedInputSignal contains MAXIMUM_INT_PITCH_DELAY values from previous frame, points to current frame  */
 
 	/*** find the open loop pitch delay ***/
-	uint16_t openLoopPitchDelay = findOpenLoopPitchDelay(&(encoderChannelContext->weightedInputSignal[MAXIMUM_INT_PITCH_DELAY]));
+	openLoopPitchDelay = findOpenLoopPitchDelay(&(encoderChannelContext->weightedInputSignal[MAXIMUM_INT_PITCH_DELAY]));
 
 	/* define boundaries for closed loop pitch delay search as specified in 3.7 */
-	int16_t intPitchDelayMin = openLoopPitchDelay-3;
+	intPitchDelayMin = openLoopPitchDelay-3;
 	if (intPitchDelayMin < 20) {
 		intPitchDelayMin = 20;
 	}
-	int16_t intPitchDelayMax = intPitchDelayMin + 6;
+	intPitchDelayMax = intPitchDelayMin + 6;
 	if (intPitchDelayMax > MAXIMUM_INT_PITCH_DELAY) {
 		intPitchDelayMax = MAXIMUM_INT_PITCH_DELAY;
 		intPitchDelayMin = MAXIMUM_INT_PITCH_DELAY - 6;
@@ -178,16 +185,21 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 	/*****************************************************************************************/
 	/* loop over the two subframes: Closed-loop pitch search(adaptative codebook), fixed codebook, memory update */
 	/* set index and buffers */
-	int subframeIndex;
-	int LPCoefficientsIndex = 0;
-	int parametersIndex = 4; /* index to insert parameters in the parameters output array */
-	word16_t impulseResponseInput[L_SUBFRAME]; /* input buffer for the impulse response computation: in Q12, 1 followed by all zeros see spec A3.5*/
 	impulseResponseInput[0] = ONE_IN_Q12;
 	memset(&(impulseResponseInput[1]), 0, (L_SUBFRAME-1)*sizeof(word16_t));
 
 	for (subframeIndex=0; subframeIndex<L_FRAME; subframeIndex+=L_SUBFRAME) {
+		int16_t intPitchDelay, fracPitchDelay;
+		word16_t adaptativeCodebookGain;
 		/*** Compute the impulse response : filter a subframe long buffer filled with unit and only zero through the 1/weightedqLPCoefficients as in spec A.3.5 ***/
 		word16_t impulseResponseBuffer[NB_LSP_COEFF+L_SUBFRAME]; /* impulseResponseBuffer in Q12, need NB_LSP_COEFF as past value to go through filtering function */
+		word16_t filteredAdaptativeCodebookVector[NB_LSP_COEFF+L_SUBFRAME]; /* in Q0, the first NB_LSP_COEFF words are set to zero and used by filter only */
+		word64_t gainQuantizationXy, gainQuantizationYy; /* used to store in Q0 values reused in gain quantization */
+		word16_t fixedCodebookVector[L_SUBFRAME]; /* in Q13 */
+		word16_t convolvedFixedCodebookVector[L_SUBFRAME]; /* in Q12 */
+		word16_t quantizedAdaptativeCodebookGain; /* in Q14 */
+		word16_t quantizedFixedCodebookGain; /* in Q1 */
+
 		memset(impulseResponseBuffer, 0, (NB_LSP_COEFF)*sizeof(word16_t)); /* set the past values to zero */
 		synthesisFilter(impulseResponseInput, &(weightedqLPCoefficients[LPCoefficientsIndex]), &(impulseResponseBuffer[NB_LSP_COEFF]));
 	
@@ -197,7 +209,6 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 
 		/*** Adaptative Codebook search : compute the intPitchDelay, fracPitchDelay and associated parameter, compute also the adaptative codebook vector used to generate the excitation ***/
 		/* after this call, the excitationVector[L_PAST_EXCITATION + subFrameIndex] contains the adaptative codebook vector as in spec 3.7.1 */
-		int16_t intPitchDelay, fracPitchDelay;
 		adaptativeCodebookSearch(&(encoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &intPitchDelayMin, &intPitchDelayMax, &(impulseResponseBuffer[NB_LSP_COEFF]), &(encoderChannelContext->targetSignal[NB_LSP_COEFF]),
 			&intPitchDelay, &fracPitchDelay, &(parameters[parametersIndex]), subframeIndex);
 
@@ -206,13 +217,10 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 		/* this computation makes use of two partial results used for gainQuantization too (yy and xy in eq63), they are part of the function output */
 		/* note spec 3.7.3 eq44 make use of convolution of impulseResponse and adaptative codebook vector to compute the filtered version */
 		/* in the Annex A, the filter being simpler, it's faster to directly filter the the vector using the  weightedqLPCoefficients */
-		word16_t filteredAdaptativeCodebookVector[NB_LSP_COEFF+L_SUBFRAME]; /* in Q0, the first NB_LSP_COEFF words are set to zero and used by filter only */
 		memset(filteredAdaptativeCodebookVector, 0, NB_LSP_COEFF*sizeof(word16_t));
 		synthesisFilter(&(encoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(weightedqLPCoefficients[LPCoefficientsIndex]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]));
 
-		word64_t gainQuantizationXy, gainQuantizationYy; /* used to store in Q0 values reused in gain quantization */
-
-		word16_t adaptativeCodebookGain = computeAdaptativeCodebookGain(&(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]), &gainQuantizationXy, &gainQuantizationYy); /* gain in Q14 */
+		adaptativeCodebookGain = computeAdaptativeCodebookGain(&(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]), &gainQuantizationXy, &gainQuantizationYy); /* gain in Q14 */
 		
 		/* increase parameters index and compute P0 if needed */
 		parametersIndex++;
@@ -222,15 +230,11 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 		}
 
 		/*** Fixed Codebook Search : compute the parameters for fixed codebook and the regular and convolved version of the fixed codebook vector ***/
-		word16_t fixedCodebookVector[L_SUBFRAME]; /* in Q13 */
-		word16_t convolvedFixedCodebookVector[L_SUBFRAME]; /* in Q12 */
 		fixedCodebookSearch(&(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(impulseResponseBuffer[NB_LSP_COEFF]), intPitchDelay, encoderChannelContext->lastQuantizedAdaptativeCodebookGain, &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]), adaptativeCodebookGain,
 			&(parameters[parametersIndex]), &(parameters[parametersIndex+1]), fixedCodebookVector, convolvedFixedCodebookVector);
 		parametersIndex+=2;
 
 		/*** gains Quantization ***/
-		word16_t quantizedAdaptativeCodebookGain; /* in Q14 */
-		word16_t quantizedFixedCodebookGain; /* in Q1 */
 		gainQuantization(encoderChannelContext, &(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]), convolvedFixedCodebookVector, fixedCodebookVector, gainQuantizationXy, gainQuantizationYy,
 			&quantizedAdaptativeCodebookGain, &quantizedFixedCodebookGain, &(parameters[parametersIndex]), &(parameters[parametersIndex+1]));
 		parametersIndex+=2;

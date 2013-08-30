@@ -32,8 +32,9 @@ struct bcg729Encoder_struct {
 };
 
 static void filter_init(MSFilter *f){
+	struct bcg729Encoder_struct* obj;
 	f->data = ms_new0(struct bcg729Encoder_struct,1);
-	struct bcg729Encoder_struct* obj= (struct bcg729Encoder_struct*) f->data;
+	obj = (struct bcg729Encoder_struct*) f->data;
 	obj->ptime=20;
 	obj->max_ptime=100;
 }
@@ -119,29 +120,70 @@ static MSFilterMethod filter_methods[]={
 };
 
 
+#define MS_BCG729_ENC_ID				MS_FILTER_PLUGIN_ID
+#define MS_BCG729_ENC_NAME				"MSBCG729Enc"
+#define MS_BCG729_ENC_DESCRIPTION		"G729 audio encoder filter"
+#define MS_BCG729_ENC_CATEGORY			MS_FILTER_ENCODER
+#define MS_BCG729_ENC_ENC_FMT			"G729"
+#define MS_BCG729_ENC_NINPUTS			1
+#define MS_BCG729_ENC_NOUTPUTS			1
+#define MS_BCG729_ENC_FLAGS				0
+
+#ifndef _MSC_VER
 
 MSFilterDesc ms_bcg729_enc_desc={
-	.id=MS_FILTER_PLUGIN_ID, /* from Allfilters.h*/
-	.name="MSBCG729Enc",
-	.text="G729 audio encoder filter.",
-	.category=MS_FILTER_ENCODER,
-	.enc_fmt="G729",
-	.ninputs=1, /*number of inputs*/
-	.noutputs=1, /*number of outputs*/
+	.id=MS_BCG729_ENC_ID,
+	.name=MS_BCG729_ENC_NAME,
+	.text=MS_BCG729_ENC_DESCRIPTION,
+	.category=MS_BCG729_ENC_CATEGORY,
+	.enc_fmt=MS_BCG729_ENC_ENC_FMT,
+	.ninputs=MS_BCG729_ENC_NINPUTS, /*number of inputs*/
+	.noutputs=MS_BCG729_ENC_NOUTPUTS, /*number of outputs*/
 	.init=filter_init,
 	.preprocess=filter_preprocess,
 	.process=filter_process,
 	.postprocess=filter_postprocess,
 	.uninit=filter_uninit,
-	.methods=filter_methods
+	.methods=filter_methods,
+	.flags=MS_BCG729_ENC_FLAGS
 };
+
+#else
+
+MSFilterDesc ms_bcg729_enc_desc={
+	MS_BCG729_ENC_ID,
+	MS_BCG729_ENC_NAME,
+	MS_BCG729_ENC_DESCRIPTION,
+	MS_BCG729_ENC_CATEGORY,
+	MS_BCG729_ENC_ENC_FMT,
+	MS_BCG729_ENC_NINPUTS,
+	MS_BCG729_ENC_NOUTPUTS,
+	filter_init,
+	filter_preprocess,
+	filter_process,
+	filter_postprocess,
+	filter_uninit,
+	filter_methods,
+	MS_BCG729_ENC_FLAGS
+};
+
+#endif
+
 MS_FILTER_DESC_EXPORT(ms_bcg729_enc_desc)
 
+#ifdef _MSC_VER
+#define MS_PLUGIN_DECLARE(type) __declspec(dllexport) type
+#else
+#define MS_PLUGIN_DECLARE(type) type
+#endif
+
 extern MSFilterDesc ms_bcg729_dec_desc;
+
 #ifndef VERSION
 	#define VERSION "debug"
 #endif
-void libmsbcg729_init(){
+
+MS_PLUGIN_DECLARE(void) libmsbcg729_init(void){
 	ms_filter_register(&ms_bcg729_enc_desc);
 	ms_filter_register(&ms_bcg729_dec_desc);
 	ms_message(" libmsbcg729 " VERSION " plugin loaded");

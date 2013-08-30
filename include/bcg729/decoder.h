@@ -23,13 +23,19 @@
 typedef struct bcg729DecoderChannelContextStruct_struct bcg729DecoderChannelContextStruct;
 #include <stdint.h>
 
+#ifdef _MSC_VER
+#define BCG729_VISIBILITY
+#else
+#define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
+#endif
+
 /*****************************************************************************/
 /* initBcg729DecoderChannel : create context structure and initialise it     */
 /*    return value :                                                         */
 /*      - the decoder channel context data                                   */
 /*                                                                           */
 /*****************************************************************************/
-__attribute__ ((visibility ("default"))) bcg729DecoderChannelContextStruct *initBcg729DecoderChannel();
+BCG729_VISIBILITY bcg729DecoderChannelContextStruct *initBcg729DecoderChannel();
 
 /*****************************************************************************/
 /* closeBcg729DecoderChannel : free memory of context structure              */
@@ -37,7 +43,7 @@ __attribute__ ((visibility ("default"))) bcg729DecoderChannelContextStruct *init
 /*      -(i) decoderChannelContext : the channel context data                */
 /*                                                                           */
 /*****************************************************************************/
-__attribute__ ((visibility ("default"))) void closeBcg729DecoderChannel(bcg729DecoderChannelContextStruct *decoderChannelContext);
+BCG729_VISIBILITY void closeBcg729DecoderChannel(bcg729DecoderChannelContextStruct *decoderChannelContext);
 
 /*****************************************************************************/
 /* bcg729Decoder :                                                           */
@@ -48,5 +54,5 @@ __attribute__ ((visibility ("default"))) void closeBcg729DecoderChannel(bcg729De
 /*      -(o) signal : a decoded frame 80 samples (16 bits PCM)               */
 /*                                                                           */
 /*****************************************************************************/
-__attribute__ ((visibility ("default"))) void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, int16_t signal[]);
+BCG729_VISIBILITY void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, int16_t signal[]);
 #endif /* ifndef DECODER_H */

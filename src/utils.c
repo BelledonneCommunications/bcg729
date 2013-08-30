@@ -174,6 +174,8 @@ word32_t MACodeGainPrediction(word16_t *previousGainPredictionError, word16_t *f
 	/* compute the sum of squares of fixedCodebookVector in Q26 */
 	int i;
 	word32_t fixedCodebookVectorSquaresSum = 0;
+	word32_t acc;
+
 	for (i=0; i<L_SUBFRAME; i++) {
 		if (fixedCodebookVector[i] != 0) { /* as most of the codebook vector is egal to 0, it worth checking it to avoid useless multiplications */
  			/* fixedCodebookVector in Q1.13 and final sum in range [4, 8.48] (4 values filled with abs values: 1,1,1.8 and 1.8 in the vector give max value of sum) */
@@ -185,7 +187,7 @@ word32_t MACodeGainPrediction(word16_t *previousGainPredictionError, word16_t *f
 	/* compute E| - E as in eq71, result in Q16 */
 	/* acc = 124.2884 - 3.0103*log2(Sum) */
 	/* acc = 8145364[32 bits Q16] - 24660[16 bits Q2.13]*log2(Sum)[32 bits Q16] */
-	word32_t acc = MAC16_32_Q13(8145364, -24660, g729Log2_Q0Q16(fixedCodebookVectorSquaresSum)); /* acc in Q16 */
+	acc = MAC16_32_Q13(8145364, -24660, g729Log2_Q0Q16(fixedCodebookVectorSquaresSum)); /* acc in Q16 */
 
 	/* accumulate the MA prediction described in eq69 to the previous Sum, result will be in E~(m) + E| -E as used in eq71 */
 	/* acc in Q16->Q24, previousGainPredictionError in Q10 and MAPredictionCoefficients in Q0.14*/

@@ -55,6 +55,9 @@ void decodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderChanne
 				int16_t *intPitchDelay, word16_t *excitationVector)
 {
 	int16_t fracPitchDelay;
+	word16_t *excitationVectorMinusK; /* pointer to u(-k) */
+	int n;
+
 	/*** Compute the Pitch Delay from the Codebook index ***/
 	/* fracPitchDelay is computed in the range -1,0,1 */
 	if (subFrameIndex == 0 ) { /* first subframe */
@@ -114,8 +117,6 @@ void decodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderChanne
 	/* v the adaptative codebook vector */
 	/* b30 an interpolation filter */
 
-	word16_t *excitationVectorMinusK; /* pointer to u(-k) */
-
 	/* scale fracPichDelay from -1,0.1 to 0,1,2 */
 	if (fracPitchDelay==1) {
 		excitationVectorMinusK = &(excitationVector[-(*intPitchDelay+1)]); /* fracPitchDelay being positive -> increase by one the integer part and set to 2 the fractional part : -(k+1/3) -> -(k+1)+2/3 */
@@ -125,7 +126,6 @@ void decodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderChanne
 		excitationVectorMinusK = &(excitationVector[-(*intPitchDelay)]); /* -(k-1/3) -> -k+1/3  or -(k) -> -k*/
 	}
 
-	int n;
 	for (n=0; n<L_SUBFRAME; n++) { /* loop over the whole subframe */
 		word16_t *excitationVectorNMinusK = &(excitationVectorMinusK[n]); /* point to u(n-k), unscaled value, full range */
 		word16_t *excitationVectorNMinusKPlusOne = &(excitationVectorMinusK[n+1]); /* point to u(n-k+1), unscaled value, full range */

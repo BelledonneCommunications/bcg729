@@ -94,21 +94,53 @@ static MSFilterMethod filter_methods[]={
 };
 
 
+#define MS_BCG729_DEC_ID				MS_FILTER_PLUGIN_ID
+#define MS_BCG729_DEC_NAME				"MSBCG729Dec"
+#define MS_BCG729_DEC_DESCRIPTION		"G729 audio decoder filter"
+#define MS_BCG729_DEC_CATEGORY			MS_FILTER_DECODER
+#define MS_BCG729_DEC_ENC_FMT			"G729"
+#define MS_BCG729_DEC_NINPUTS			1
+#define MS_BCG729_DEC_NOUTPUTS			1
+#define MS_BCG729_DEC_FLAGS				MS_FILTER_IS_PUMP
+
+#ifndef _MSC_VER
 
 MSFilterDesc ms_bcg729_dec_desc={
-	.id=MS_FILTER_PLUGIN_ID, /* from Allfilters.h*/
-	.name="MSBCG729Dec",
-	.text="G729 decoder filter.",
-	.category=MS_FILTER_DECODER,
-	.enc_fmt="G729",
-	.ninputs=1, /*number of inputs*/
-	.noutputs=1, /*number of outputs*/
+	.id=MS_BCG729_DEC_ID,
+	.name=MS_BCG729_DEC_NAME,
+	.text=MS_BCG729_DEC_DESCRIPTION,
+	.category=MS_BCG729_DEC_CATEGORY,
+	.enc_fmt=MS_BCG729_DEC_ENC_FMT,
+	.ninputs=MS_BCG729_DEC_NINPUTS, /*number of inputs*/
+	.noutputs=MS_BCG729_DEC_NOUTPUTS, /*number of outputs*/
 	.init=filter_init,
 	.preprocess=filter_preprocess,
 	.process=filter_process,
 	.postprocess=filter_postprocess,
 	.uninit=filter_uninit,
 	.methods=filter_methods,
-	.flags=MS_FILTER_IS_PUMP
+	.flags=MS_BCG729_DEC_FLAGS
 };
+
+#else
+
+MSFilterDesc ms_bcg729_dec_desc={
+	MS_BCG729_DEC_ID,
+	MS_BCG729_DEC_NAME,
+	MS_BCG729_DEC_DESCRIPTION,
+	MS_BCG729_DEC_CATEGORY,
+	MS_BCG729_DEC_ENC_FMT,
+	MS_BCG729_DEC_NINPUTS,
+	MS_BCG729_DEC_NOUTPUTS,
+	filter_init,
+	filter_preprocess,
+	filter_process,
+	filter_postprocess,
+	filter_uninit,
+	filter_methods,
+	MS_BCG729_DEC_FLAGS
+};
+
+#endif
+
 MS_FILTER_DESC_EXPORT(ms_bcg729_dec_desc)

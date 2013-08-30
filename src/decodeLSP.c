@@ -65,6 +65,8 @@ void decodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext, uint16_
 
 
 	if (frameErased == 0) { /* frame is ok, proceed according to 3.2.4 section of the doc */
+		word32_t acc; /* Accumulator in Q2.28 */
+
 		/*** doc 3.2.4 eq(19) ***/
 		/* get the L codewords from the codebooks L1, L2 and L3 */
 		/* for easier implementation, L2 and L3 5 dimensional codebooks have been stored in one 10 dimensional L2L3 codebook */
@@ -90,7 +92,6 @@ void decodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext, uint16_
 		/* currentqLSF and previousLCodeWord in Q2.13 */
 		/* MAPredictor and MAPredictorSum in Q0.15 with MAPredictorSum[MA switch][i]+Sum[j=0-3](MAPredictor[MA switch][j][i])=1 -> acc will end up being in Q2.28*/
 		/* Note : previousLCodeWord array containing the last 4 code words is updated during this phase */
-		word32_t acc; /* Accumulator in Q2.28 */
 
 		for (i=0; i<NB_LSP_COEFF; i++) { 
 			acc = MULT16_16(MAPredictorSum[L[0]][i], currentqLSF[i]);
@@ -134,12 +135,13 @@ void decodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext, uint16_
 
 	
 	} else { /* frame erased indicator is set, proceed according to section 4.4 of the specs */
+		word32_t acc; /* acc in Q2.28 */
+
 		/* restore the qLSF of last valid frame */
 		for (i=0; i<NB_LSP_COEFF; i++) {
 			currentqLSF[i] = decoderChannelContext->lastqLSF[i];
 		}
 		
-		word32_t acc; /* acc in Q2.28 */
 		/* compute back the codewords from the qLSF and store them in the previousLCodeWord buffer */
 		for (i=0; i<NB_LSP_COEFF; i++) { /* currentqLSF and previousLCodeWord in Q2.13, MAPredictor in Q0.15 and invMAPredictorSum in Q3.12 */
 			acc = SHL(decoderChannelContext->lastqLSF[i],15); /* Q2.13 -> Q2.28 */

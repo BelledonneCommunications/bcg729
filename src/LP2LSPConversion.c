@@ -42,10 +42,14 @@ static const word16_t cosW0pi[NB_COMPUTED_VALUES_CHEBYSHEV_POLYNOMIAL]; /* cos(w
 int LP2LSPConversion(word16_t LPCoefficients[], word16_t LSPCoefficients[])
 {
 	uint8_t i;
-
-	/*** Compute the polynomials coefficients according to spec 3.2.3 eq15 ***/
 	word32_t f1[6];
 	word32_t f2[6]; /* coefficients for polynomials F1 anf F2 in Q12 for computation, then converted in Q15 for the Chebyshev Polynomial function */
+	uint8_t numberOfRootFound = 0; /* used to check the final number of roots found and exit the loop on each polynomial computation when we have 10 roots */
+	word32_t *polynomialCoefficients;
+	word32_t previousCx;
+	word32_t Cx; /* value of Chebyshev Polynomial at current point in Q15 */
+
+	/*** Compute the polynomials coefficients according to spec 3.2.3 eq15 ***/
 	f1[0] = ONE_IN_Q12; /* values 0 are not part of the output, they are just used for computation purpose */ 
 	f2[0] = ONE_IN_Q12;
 	/* for (i = 0; i< 5; i++) {		*/
@@ -64,10 +68,8 @@ int LP2LSPConversion(word16_t LPCoefficients[], word16_t LSPCoefficients[])
 
 	/*** Compute at each step(50 steps for the AnnexA version) the Chebyshev polynomial to find the 10 roots ***/
 	/* start using f1 polynomials coefficients and altern with f2 after founding each root (spec 3.2.3 eq13 and eq14) */
-	uint8_t numberOfRootFound = 0; /* used to check the final number of roots found and exit the loop on each polynomial computation when we have 10 roots */
-	word32_t *polynomialCoefficients = f1; /* start with f1 coefficients */
-	word32_t previousCx = ChebyshevPolynomial(cosW0pi[0], polynomialCoefficients); /* compute the first point and store it as the previous value for polynomial */
-	word32_t Cx; /* value of Chebyshev Polynomial at current point in Q15 */
+	polynomialCoefficients = f1; /* start with f1 coefficients */
+	previousCx = ChebyshevPolynomial(cosW0pi[0], polynomialCoefficients); /* compute the first point and store it as the previous value for polynomial */
 
 	for (i=1; i<NB_COMPUTED_VALUES_CHEBYSHEV_POLYNOMIAL; i++) {
 		Cx =  ChebyshevPolynomial(cosW0pi[i], polynomialCoefficients);
@@ -78,8 +80,9 @@ int LP2LSPConversion(word16_t LPCoefficients[], word16_t LSPCoefficients[])
 			word16_t xHigh = cosW0pi[i];
 			word16_t xMean;
 			for (j=0; j<2; j++) {
+				word32_t middleCx;
 				xMean = (word16_t)SHR(ADD32(xLow, xHigh), 1);
-				word32_t middleCx = ChebyshevPolynomial(xMean, polynomialCoefficients); /* compute the polynome for the value in the middle of current interval */
+				middleCx = ChebyshevPolynomial(xMean, polynomialCoefficients); /* compute the polynome for the value in the middle of current interval */
 				
 				if ((previousCx^middleCx)&0x10000000) { /* check signe change by XOR on the value of first bit */
 					xHigh = xMean;

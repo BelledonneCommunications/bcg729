@@ -55,8 +55,14 @@ void initDecodeGains(bcg729DecoderChannelContextStruct *decoderChannelContext)
 void decodeGains (bcg729DecoderChannelContextStruct *decoderChannelContext, uint16_t GA, uint16_t GB, word16_t *fixedCodebookVector, uint8_t frameErasureFlag,
 			word16_t *adaptativeCodebookGain, word16_t *fixedCodebookGain)
 {
+	word32_t predictedFixedCodebookGain;
+	word16_t fixedCodebookGainCorrectionFactor;
+
 	/* check the erasure flag */
 	if (frameErasureFlag != 0) { /* we have a frame erasure, proceed as described in spec 4.4.2 */
+		int i;
+		word32_t currentGainPredictionError =0;
+
 		/*  adaptativeCodebookGain as in eq94 */
 		if (*adaptativeCodebookGain < 16384) { /* last subframe gain < 1 in Q14 */
 			*adaptativeCodebookGain = MULT16_16_Q15(*adaptativeCodebookGain, 29491 );      /* *0.9 in Q15 */
@@ -67,8 +73,6 @@ void decodeGains (bcg729DecoderChannelContextStruct *decoderChannelContext, uint
 		*fixedCodebookGain = MULT16_16_Q15(*fixedCodebookGain, 32113 );      /* *0.98 in Q15 */
 
 		/* And update the previousGainPredictionError according to spec 4.4.3 */
-		int i;
-		word32_t currentGainPredictionError =0;
 		for (i=0; i<4; i++) {
 			currentGainPredictionError = ADD32(currentGainPredictionError, decoderChannelContext->previousGainPredictionError[i]); /* previousGainPredictionError in Q3.10-> Sum in Q5.10 (on 32 bits) */
 		}
@@ -98,10 +102,10 @@ void decodeGains (bcg729DecoderChannelContextStruct *decoderChannelContext, uint
 	*adaptativeCodebookGain = ADD16(GACodebook[GA][0], GBCodebook[GB][0]); /* result in Q1.14 */
 
 	/* Fixed Codebook: MA code-gain prediction */
-	word32_t predictedFixedCodebookGain = MACodeGainPrediction(decoderChannelContext->previousGainPredictionError, fixedCodebookVector); /* predictedFixedCodebookGain on 32 bits in Q11.16 */
+	predictedFixedCodebookGain = MACodeGainPrediction(decoderChannelContext->previousGainPredictionError, fixedCodebookVector); /* predictedFixedCodebookGain on 32 bits in Q11.16 */
 
 	/* get fixed codebook gain correction factor(gama) from the codebooks GA and GB according to eq74 */
-	word16_t fixedCodebookGainCorrectionFactor = ADD16(GACodebook[GA][1], GBCodebook[GB][1]); /* result in Q3.12 (range [0.185, 5.05])*/
+	fixedCodebookGainCorrectionFactor = ADD16(GACodebook[GA][1], GBCodebook[GB][1]); /* result in Q3.12 (range [0.185, 5.05])*/
 
 	/* compute fixedCodebookGain according to eq74 */
 	*fixedCodebookGain = (word16_t)PSHR(MULT16_32_Q12(fixedCodebookGainCorrectionFactor, predictedFixedCodebookGain), 15); /* Q11.16*Q3.12 -> Q14.16, shift by 15 to get a Q14.1 which fits on 16 bits */

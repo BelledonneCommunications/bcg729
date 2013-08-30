@@ -23,13 +23,19 @@
 #include <stdint.h>
 typedef struct bcg729EncoderChannelContextStruct_struct bcg729EncoderChannelContextStruct;
 
+#ifdef _MSC_VER
+#define BCG729_VISIBILITY
+#else
+#define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
+#endif
+
 /*****************************************************************************/
 /* initBcg729EncoderChannel : create context structure and initialise it     */
 /*    return value :                                                         */
 /*      - the encoder channel context data                                   */
 /*                                                                           */
 /*****************************************************************************/
-__attribute__ ((visibility ("default"))) bcg729EncoderChannelContextStruct *initBcg729EncoderChannel();
+BCG729_VISIBILITY bcg729EncoderChannelContextStruct *initBcg729EncoderChannel();
 
 /*****************************************************************************/
 /* closeBcg729EncoderChannel : free memory of context structure              */
@@ -37,7 +43,7 @@ __attribute__ ((visibility ("default"))) bcg729EncoderChannelContextStruct *init
 /*      -(i) encoderChannelContext : the channel context data                */
 /*                                                                           */
 /*****************************************************************************/
-__attribute__ ((visibility ("default"))) void closeBcg729EncoderChannel(bcg729EncoderChannelContextStruct *encoderChannelContext);
+BCG729_VISIBILITY void closeBcg729EncoderChannel(bcg729EncoderChannelContextStruct *encoderChannelContext);
 
 /*****************************************************************************/
 /* bcg729Encoder :                                                           */
@@ -48,5 +54,5 @@ __attribute__ ((visibility ("default"))) void closeBcg729EncoderChannel(bcg729En
 /*           on 80 bits (5 16bits words)                                     */
 /*                                                                           */
 /*****************************************************************************/
-__attribute__ ((visibility ("default"))) void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]);
+BCG729_VISIBILITY void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]);
 #endif /* ifndef ENCODER_H */

@@ -41,6 +41,8 @@
 word16_t computeAdaptativeCodebookGain(word16_t targetSignal[], word16_t filteredAdaptativeCodebookVector[], word64_t *gainQuantizationXy, word64_t *gainQuantizationYy)
 {
 	int i;
+	word32_t gain;
+
 	*gainQuantizationXy = 0; /* contains the scalar product targetSignal, filteredAdaptativeCodebookVector : numerator */
 	*gainQuantizationYy = 0; /* contains the scalar product filteredAdaptativeCodebookVector^2 : denominator */
 
@@ -56,7 +58,7 @@ word16_t computeAdaptativeCodebookGain(word16_t targetSignal[], word16_t filtere
 	}
 
 	/* output shall be in Q14 */
-	word32_t gain = DIV64(SHL64(*gainQuantizationXy,14),*gainQuantizationYy); /* gain in Q14 */
+	gain = DIV64(SHL64(*gainQuantizationXy,14),*gainQuantizationYy); /* gain in Q14 */
 	
 	/* check if it is not above 1.2 */
 	if (gain>ONE_POINT_2_IN_Q14) {

@@ -53,8 +53,26 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 			uint16_t *fixedCodebookParameter, uint16_t *fixedCodebookPulsesSigns, word16_t fixedCodebookVector[], word16_t fixedCodebookVectorConvolved[])
 {
 	int i,j,n;
-	/* compute the target signal for fixed codebook spec 3.8.1 eq50 : fixedCodebookTargetSignal[i] = targetSignal[i] - (adaptativeCodebookGain * filteredAdaptativeCodebookVector[i]) */
 	word16_t fixedCodebookTargetSignal[L_SUBFRAME];
+	word32_t correlationSignal32[L_SUBFRAME]; /* on 32 bits in Q12 */ 
+	word16_t correlationSignal[L_SUBFRAME]; /* normalised to fit on 13 bits */
+	word32_t correlationSignalMax = 0;
+	word32_t abscCrrelationSignal32;
+	uint16_t correlationSignalMaxNorm;
+	int correlationSignalSign[L_SUBFRAME]; /* to store the sign of each correlationSignal element */
+	/* build the matrix Ф' : impulseResponse correlation matrix spec 3.8.1 eq51, eq56 and eq57 */
+	/* correlationSignal turns to absolute values and sign of elements is stored in correlationSignalSign */
+	word32_t Phi[L_SUBFRAME][L_SUBFRAME];
+	int m3Base;
+	int i0=0, i1=0, i2=0, i3=0;
+	word32_t correlationSquareMax = -1;
+	word32_t energyMax = 1;
+	int m0=0, m1=0, m2=0, m3=0;
+	int mSwitch[2][4] = {{2,3,0,1},{3,0,1,2}};
+	int mIndex;
+	int jx = 0;
+
+	/* compute the target signal for fixed codebook spec 3.8.1 eq50 : fixedCodebookTargetSignal[i] = targetSignal[i] - (adaptativeCodebookGain * filteredAdaptativeCodebookVector[i]) */
 	for (i=0; i<L_SUBFRAME; i++) {
 		fixedCodebookTargetSignal[i] = MSU16_16_Q14(targetSignal[i], filteredAdaptativeCodebookVector[i], adaptativeCodebookGain); /* adaptativeCodebookGain in Q14, other values in Q0 */
 	}
@@ -65,22 +83,19 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 	}
 
 	/* compute the correlation signal as in spec 3.8.1 eq52 */
-	word32_t correlationSignal32[L_SUBFRAME]; /* on 32 bits in Q12 */ 
-	word16_t correlationSignal[L_SUBFRAME]; /* normalised to fit on 13 bits */
-	word32_t correlationSignalMax = 0;
 	/* compute on 32 bits and get the maximum */
 	for (n=0; n<L_SUBFRAME; n++) {
 		correlationSignal32[n] = 0;
 		for (i=n; i<L_SUBFRAME; i++) {
 			correlationSignal32[n] = MAC16_16(correlationSignal32[n], fixedCodebookTargetSignal[i], impulseResponse[i-n]);
 		}
-		word32_t abscCrrelationSignal32 = correlationSignal32[n]>=0?correlationSignal32[n]:-correlationSignal32[n];
+		abscCrrelationSignal32 = correlationSignal32[n]>=0?correlationSignal32[n]:-correlationSignal32[n];
 		if (abscCrrelationSignal32>correlationSignalMax) {
 			correlationSignalMax = abscCrrelationSignal32;
 		}
 	}
 	/* normalise on 13 bits */
-	uint16_t correlationSignalMaxNorm = countLeadingZeros(correlationSignalMax);
+	correlationSignalMaxNorm = countLeadingZeros(correlationSignalMax);
 	if (correlationSignalMaxNorm<18) { /* if it doesn't already fit on 13 bits */
 		for (i=0; i<L_SUBFRAME; i++) {
 			correlationSignal[i] = (word16_t)(SHR(correlationSignal32[i], 18-correlationSignalMaxNorm));
@@ -91,22 +106,9 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 		}
 	}
 
-	int correlationSignalSign[L_SUBFRAME]; /* to store the sign of each correlationSignal element */
-	/* build the matrix Ф' : impulseResponse correlation matrix spec 3.8.1 eq51, eq56 and eq57 */
-	/* correlationSignal turns to absolute values and sign of elements is stored in correlationSignalSign */
-	word32_t Phi[L_SUBFRAME][L_SUBFRAME];
 	computeImpulseResponseCorrelationMatrix(impulseResponse, correlationSignal, correlationSignalSign, Phi);
 	
 	/* search for impulses leading to a max in C^2/E : spec 3.8.1 eq53 */
-	int m3Base;
-	int i0=0, i1=0, i2=0, i3=0;
-	word32_t correlationSquareMax = -1;
-	word32_t energyMax = 1;
-	int m0=0, m1=0, m2=0, m3=0;
-	int mSwitch[2][4] = {{2,3,0,1},{3,0,1,2}};
-	int mIndex;
-	int jx = 0;
-
 	/* algorithm, not described in spec, retrieved from ITU code */
 	/* by tracks are intended series of index m0 track is 0,5,10,...35. m1 is 1,6,11,..,36. m2 is 2,7,12,..,37. m3 is 3,8,13,..,38. m4 is 4,9,14,..,39 */
 	/* note index m3 will follow track m3 and m4 */
@@ -129,6 +131,7 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 			for (i=0; i<2; i++) {
 				word16_t correlationM2 = -1;
 				int currentM2=0;
+				word32_t energyM2;
 				for (j=mSwitch[mIndex][0]; j<L_SUBFRAME; j+=5) { /* in the m2 range, find the correlation Max -> select m2 */
 					if (correlationSignal[j]>correlationM2 && j!=firstM2) {
 						currentM2 = j;
@@ -137,7 +140,7 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 				}
 				firstM2 = currentM2; /* to avoid selecting the same maximum at next iteration */
 
-				word32_t energyM2 = Phi[currentM2][currentM2]; /* compute the energy with terms of eq55 using m2 only: Phi'(m2,m2) */		
+				energyM2 = Phi[currentM2][currentM2]; /* compute the energy with terms of eq55 using m2 only: Phi'(m2,m2) */		
 			
 				/* with selected m2, test the 8 m3 possibilities for the current m3 track */
 				for (j=mSwitch[mIndex][1]; j<L_SUBFRAME; j+=5) {
@@ -308,17 +311,18 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 void computeImpulseResponseCorrelationMatrix(word16_t impulseResponse[], word16_t correlationSignal[], int correlationSignalSign[], word32_t Phi[L_SUBFRAME][L_SUBFRAME])
 {
 	int i,j,iComp;
+	word32_t acc = 0;
+	uint16_t PhiScaling = 0;
+	int correlationSignalSignInv[L_SUBFRAME];
 
 	/* first compute the diagonal Phi(x,x) : Phi(39,39) = h[0]^2 # Phi(38,38) = Phi(39,39)+h[1]^2 */
 	/* this diagonal must be divided by 2 according to spec 3.8.1 eq57 */
-	word32_t acc = 0;
 	for (i=0, iComp=L_SUBFRAME-1; i<L_SUBFRAME; i++, iComp--) { /* i in [0..39], iComp in [39..0] */
 		acc = MAC16_16(acc, impulseResponse[i], impulseResponse[i]); /* impulseResponse in Q12 -> acc in Q24 */
 		Phi[iComp][iComp] = SHR(acc,1); /* divide by 2: eq57*/
 	}
 
 	/* check for possible overflow: Phi will be summed 10 times, so max Phi (by construction Phi[0][0]*2 is the max of Phi-> 2*Phi[0][0]*10 must be < 0x7fff ffff -> Phi[0][0]< 0x06666666 - otherwise scale Phi)*/
-	uint16_t PhiScaling = 0;
 	if (Phi[0][0]>0x6666666) {
 		PhiScaling = 3 - countLeadingZeros((Phi[0][0]<<1) + 0x3333333); /* complement 0xccccccc adding 0x3333333 to shift by one when max(2*Phi[0][0]) is in 0x0fffffff < max < 0xcccccc */
 		for (i=0; i<L_SUBFRAME; i++) {
@@ -334,7 +338,6 @@ void computeImpulseResponseCorrelationMatrix(word16_t impulseResponse[], word16_
 	}
 
 	/* correlationSignal -> absolute value and get sign (and his inverse in an array) */
-	int correlationSignalSignInv[L_SUBFRAME];
 	for (i=0; i<L_SUBFRAME; i++) {
 		if (correlationSignal[i] >= 0) {
 			correlationSignalSign[i] = 1;

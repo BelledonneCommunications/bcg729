@@ -99,6 +99,19 @@ void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uin
 	int i;
 	uint16_t parameters[NB_PARAMETERS];
 
+	/* internal buffers which we do not need to keep between calls */
+	word16_t qLSP[NB_LSP_COEFF]; /* store the qLSP coefficients in Q0.15 */
+	word16_t interpolatedqLSP[NB_LSP_COEFF]; /* store the interpolated qLSP coefficient in Q0.15 */
+	word16_t LP[2*NB_LSP_COEFF]; /* store the 2 sets of LP coefficients in Q12 */
+	int16_t intPitchDelay; /* store the Pitch Delay in and out of decodeAdaptativeCodeVector, in for decodeFixedCodeVector */
+	word16_t fixedCodebookVector[L_SUBFRAME]; /* the fixed Codebook Vector in Q1.13*/
+	word16_t postFilteredSignal[L_SUBFRAME]; /* store the postfiltered signal in Q0 */
+
+	uint8_t parityErrorFlag;
+	int subframeIndex;
+	int parametersIndex = 4; /* this is used to select the right parameter according to the subframe currently computed, start pointing to P1 */
+	int LPCoefficientsIndex = 0; /* this is used to select the right LP Coefficients according to the subframe currently computed */
+
 	/*** parse the bitstream and get all parameter into an array as in spec 4 - Table 8 ***/
 	/* parameters buffer mapping : */
 	/* 0 -> L0 (1 bit)             */
@@ -124,14 +137,6 @@ void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uin
 		}
 	}
 
-	/* internal buffers which we do not need to keep between calls */
-	word16_t qLSP[NB_LSP_COEFF]; /* store the qLSP coefficients in Q0.15 */
-	word16_t interpolatedqLSP[NB_LSP_COEFF]; /* store the interpolated qLSP coefficient in Q0.15 */
-	word16_t LP[2*NB_LSP_COEFF]; /* store the 2 sets of LP coefficients in Q12 */
-	int16_t intPitchDelay; /* store the Pitch Delay in and out of decodeAdaptativeCodeVector, in for decodeFixedCodeVector */
-	word16_t fixedCodebookVector[L_SUBFRAME]; /* the fixed Codebook Vector in Q1.13*/
-	word16_t postFilteredSignal[L_SUBFRAME]; /* store the postfiltered signal in Q0 */
-
 
 	/*****************************************************************************************/
 	/*** on frame basis : decodeLSP, interpolate them with previous ones and convert to LP ***/
@@ -150,12 +155,9 @@ void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uin
 	qLSP2LP(qLSP, &(LP[NB_LSP_COEFF]));
 
 	/* check the parity on the adaptativeCodebookIndexSubframe1(P1) with the received one (P0)*/
-	uint8_t parityErrorFlag = (uint8_t)(computeParity(parameters[4]) ^ parameters[5]);
+	parityErrorFlag = (uint8_t)(computeParity(parameters[4]) ^ parameters[5]);
 
 	/* loop over the two subframes */
-	int subframeIndex;
-	int parametersIndex = 4; /* this is used to select the right parameter according to the subframe currently computed, start pointing to P1 */
-	int LPCoefficientsIndex = 0; /* this is used to select the right LP Coefficients according to the subframe currently computed */
 	for (subframeIndex=0; subframeIndex<L_FRAME; subframeIndex+=L_SUBFRAME) {
 		/* decode the adaptative Code Vector */	
 		decodeAdaptativeCodeVector(	decoderChannelContext,

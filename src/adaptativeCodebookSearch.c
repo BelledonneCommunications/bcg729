@@ -59,13 +59,13 @@ void adaptativeCodebookSearch(word16_t excitationVector[], int16_t *intPitchDela
 				int16_t *intPitchDelay, int16_t *fracPitchDelay, uint16_t *pitchDelayCodeword,  uint16_t subFrameIndex)
 {
 	int i,j;
-
 	word32_t backwardFilteredTargetSignal[L_SUBFRAME];
+	word32_t correlationMax = MININT32;
+
 	/* compute the backward Filtered Target Signal as specified in A.3.7: correlation of target signal and impulse response */
 	correlateVectors(targetSignal, impulseResponse, backwardFilteredTargetSignal); /* targetSignal in Q0, impulseResponse in Q12 ->  backwardFilteredTargetSignal in Q12 */
 	
 	/* maximise the sum as in spec A.3.7, eq A.7 */
-	word32_t correlationMax = MININT32;
 	for (i=*intPitchDelayMin; i<=*intPitchDelayMax; i++) {
 		word32_t correlation = 0;
 		for (j=0; j<L_SUBFRAME; j++) {
@@ -87,6 +87,7 @@ void adaptativeCodebookSearch(word16_t excitationVector[], int16_t *intPitchDela
 	if (!(subFrameIndex==0 && *intPitchDelay>=85)) {
 		/* compute the fracPitchDelay*/
 		word16_t adaptativeCodebookVector[L_SUBFRAME]; /* as the adaptativeCodebookVector is computed in the excitation vector, use this buffer to backup the one giving the highest numerator */
+		word32_t correlation=0;
 		/* search the fractionnal part to get the best correlation */
 		/* we already have in excitationVector for fracPitchDelay = 0 the adaptativeCodebookVector (see specA.3.7) */
 		correlationMax = 0;
@@ -98,7 +99,6 @@ void adaptativeCodebookSearch(word16_t excitationVector[], int16_t *intPitchDela
 
 		/* Fractionnal part = -1 */
 		generateAdaptativeCodebookVector(excitationVector, *intPitchDelay, -1);
-		word32_t correlation=0;
 		for (i=0; i<L_SUBFRAME; i++) {
 			correlation = MAC16_32_Q12(correlation, excitationVector[i], backwardFilteredTargetSignal[i]);
 		}
@@ -167,6 +167,9 @@ void adaptativeCodebookSearch(word16_t excitationVector[], int16_t *intPitchDela
 void generateAdaptativeCodebookVector(word16_t excitationVector[], int16_t intPitchDelay, int16_t fracPitchDelay)
 {
 	int n,i,j;
+	word16_t *delayedExcitationVector;
+	word16_t *b30Increased;
+	word16_t *b30Decreased;
 
 	/* fracPitchDelay is in range [-1, 1], convert it to [0,2] needed by eqA.8 */
 	fracPitchDelay = -fracPitchDelay;
@@ -176,9 +179,9 @@ void generateAdaptativeCodebookVector(word16_t excitationVector[], int16_t intPi
 	}
 	
 	/**/
-	word16_t *delayedExcitationVector = &(excitationVector[-intPitchDelay]); /* delayedExcitationVector is used to address the excitation vector at index -intPitchDelay (-k in eq40) */
-	word16_t *b30Increased = &(b30[fracPitchDelay]); /* b30 increased points to b30[fracPitchDelay] : b30[t] in eq40. b30 in Q15 */
-	word16_t *b30Decreased = &(b30[3-fracPitchDelay]); /* b30 decreased points to b30[-fracPitchDelay] : b30[3-t] in eq40. b30 in Q15 */
+	delayedExcitationVector = &(excitationVector[-intPitchDelay]); /* delayedExcitationVector is used to address the excitation vector at index -intPitchDelay (-k in eq40) */
+	b30Increased = &(b30[fracPitchDelay]); /* b30 increased points to b30[fracPitchDelay] : b30[t] in eq40. b30 in Q15 */
+	b30Decreased = &(b30[3-fracPitchDelay]); /* b30 decreased points to b30[-fracPitchDelay] : b30[3-t] in eq40. b30 in Q15 */
 
 
 	for (n=0; n<L_SUBFRAME; n++) {

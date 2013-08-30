@@ -38,6 +38,7 @@ void decodeFixedCodeVector(uint16_t signs, uint16_t positions, int16_t intPitchD
 {
 	uint16_t positionsArray[4];
 	uint16_t jx;
+	int i;
 
 	/* get the positions into an array: mapping according to eq62 and table7 in spec 3.8 */
 	positionsArray[0] = (positions&(uint16_t)7)*5; /* m0 = 5*C, do not use macro here as whatever fixed or floating point computation we use, these are integers */
@@ -51,7 +52,6 @@ void decodeFixedCodeVector(uint16_t signs, uint16_t positions, int16_t intPitchD
 	positionsArray[3] = ((positions&(uint16_t)7)*5) + 3 + jx; /* m3 = 5*C + 3 + jx, do not use macro here as whatever fixed or floating point computation we use, these are integers */
 	
 	/* initialise the output Vector */
-	int i;
 	for (i=0; i<L_SUBFRAME; i++) {
 		fixedCodebookVector[i]=0;
 	}
