@@ -11,7 +11,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../../linphone/oRTP/include \
 	$(LOCAL_PATH)/../../linphone/mediastreamer2/include \
 	$(LOCAL_PATH)/../include
-LOCAL_SHARED_LIBRARIES = libbcg729
+LOCAL_STATIC_LIBRARIES = libbcg729
 include $(BUILD_STATIC_LIBRARY)
 
 

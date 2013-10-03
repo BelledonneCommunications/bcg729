@@ -31,6 +31,6 @@ LOCAL_SRC_FILES =       src/LP2LSPConversion.c \
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/include
 
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
 
 
