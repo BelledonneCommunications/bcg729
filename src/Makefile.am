@@ -27,3 +27,6 @@ libbcg729_la_SOURCES=	LP2LSPConversion.c \
 libbcg729_la_LDFLAGS= -no-undefined
 
 INCLUDES= -I$(top_srcdir)/include
+
+AM_CFLAGS=$(VISIBILITY_CFLAGS)
+

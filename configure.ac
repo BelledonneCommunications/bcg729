@@ -46,14 +46,16 @@ AC_CONFIG_FILES([
 	libbcg729.pc
 ])
 
+VISIBILITY_CFLAGS=
 case "$target_os" in
 	*mingw*)
 		CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0501"
 	;;
 	*)
-		CFLAGS="$CFLAGS -fvisibility=hidden"
+		VISIBILITY_CFLAGS="-fvisibility=hidden"
 	;;
 esac
+AC_SUBST(VISIBILITY_CFLAGS)
 
 
 AC_OUTPUT
