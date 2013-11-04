@@ -34,6 +34,31 @@ PKG_CHECK_MODULES(ORTP, ortp >= 0.21.0,[found_ortp=true],foo=bar)
 PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.8.99,[found_ms2=true],foo=bar)
 AM_CONDITIONAL(BUILD_MSBCG729, test x${found_ms2}x${found_ortp} = xtruextrue)
 
+VISIBILITY_CFLAGS=
+case "$target_os" in
+	*mingw*)
+		CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0501"
+		mingw_found=yes
+	;;
+	*)
+		VISIBILITY_CFLAGS="-fvisibility=hidden"
+	;;
+esac
+AC_SUBST(VISIBILITY_CFLAGS)
+
+# Initialize libtool
+LT_INIT([win32-dll shared disable-static])
+
+AC_CONFIG_COMMANDS([libtool-hacking],
+	[if test "$mingw_found" = "yes" ; then
+		echo "Hacking libtool to work with mingw..."
+		sed -e 's/\*\" \$a_deplib \"\*/\*/' < ./libtool > libtool.tmp
+		cp -f ./libtool.tmp ./libtool
+		rm -f ./libtool.tmp
+	fi],
+	[mingw_found=$mingw_found]
+)
+
 # Create the following files from their .in counterparts
 AC_CONFIG_FILES([
 	Makefile
@@ -45,17 +70,6 @@ AC_CONFIG_FILES([
 	test/bin/Makefile 
 	libbcg729.pc
 ])
-
-VISIBILITY_CFLAGS=
-case "$target_os" in
-	*mingw*)
-		CFLAGS="$CFLAGS -D_WIN32_WINNT=0x0501"
-	;;
-	*)
-		VISIBILITY_CFLAGS="-fvisibility=hidden"
-	;;
-esac
-AC_SUBST(VISIBILITY_CFLAGS)
 
 
 AC_OUTPUT
