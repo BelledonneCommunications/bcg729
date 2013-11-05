@@ -9,6 +9,3 @@ SUBDIRS += test
 endif
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libbcg729.pc
-
-
-

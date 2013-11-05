@@ -1,4 +1,8 @@
+if BUILD_MSBCG729
+noinst_LTLIBRARIES = libbcg729.la
+else
 lib_LTLIBRARIES = libbcg729.la
+endif
 
 libbcg729_la_SOURCES=	LP2LSPConversion.c \
 			LPSynthesisFilter.c \
@@ -29,4 +33,3 @@ libbcg729_la_LDFLAGS= -no-undefined
 INCLUDES= -I$(top_srcdir)/include
 
 AM_CFLAGS=$(VISIBILITY_CFLAGS)
-

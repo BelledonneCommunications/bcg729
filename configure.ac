@@ -22,6 +22,12 @@ AC_ARG_ENABLE(strict,
 AC_ARG_ENABLE([tests],
 	AS_HELP_STRING([--disable-tests], [Disable the tests]))
 	AM_CONDITIONAL([RUN_TESTS], [test "x$enable_tests" != "xno"])
+# configure option to disable mediastreamer plugin
+AC_ARG_ENABLE([msplugin],
+	AS_HELP_STRING([--disable-msplugin], [Disable the mediastreamer plugin]),
+	enable_msplugin="$enableval",
+	enable_msplugin="yes"
+)
 
 CFLAGS="$CFLAGS -Wall"
 
@@ -32,7 +38,7 @@ fi
 # check for libraries that have pkg-config files installed
 PKG_CHECK_MODULES(ORTP, ortp >= 0.21.0,[found_ortp=true],foo=bar)
 PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.8.99,[found_ms2=true],foo=bar)
-AM_CONDITIONAL(BUILD_MSBCG729, test x${found_ms2}x${found_ortp} = xtruextrue)
+AM_CONDITIONAL(BUILD_MSBCG729, test x${found_ms2}x${found_ortp}x${enable_msplugin} = xtruextruexyes)
 
 VISIBILITY_CFLAGS=
 case "$target_os" in
