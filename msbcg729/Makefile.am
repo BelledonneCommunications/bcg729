@@ -12,5 +12,5 @@ libmsbcg729_la_LIBADD=\
 	$(top_builddir)/src/libbcg729.la
 
 libmsbcg729_la_LDFLAGS=-module -no-undefined $(MEDIASTREAMER_LDFLAGS)
-INCLUDES = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include
 libmsbcg729_la_CFLAGS=  $(ORTP_CFLAGS) $(MEDIASTREAMER_CFLAGS)
