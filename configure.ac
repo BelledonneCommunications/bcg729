@@ -11,6 +11,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([tar-ustar --warnings=no-portability])
 AC_PROG_LIBTOOL
 AC_PROG_CC
+AC_CONFIG_HEADERS(config.h)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_ARG_ENABLE(strict,
