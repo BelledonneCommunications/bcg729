@@ -76,6 +76,7 @@ AC_CONFIG_FILES([
 	test/Makefile 
 	test/bin/Makefile 
 	libbcg729.pc
+	bcg729.spec
 ])
 
 

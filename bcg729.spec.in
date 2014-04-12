@@ -1,0 +1,54 @@
+# -*- rpm-spec -*-
+
+## rpmbuild options
+
+Summary:	Bcg729 codec plugin for mediastreamer2
+Name:	bcg729
+Version:	0.1
+Release:	1
+License:	GPL
+Group:	Applications/Communications
+URL:	http://www.belledonne-communications.com
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source0: 	%{name}-%{version}.tar.gz
+Requires: bash >= 2.0
+
+%description
+BCG729 codec plugin for mediastreamer2.
+
+%package devel
+Summary:       Development libraries for bcg729
+Group:         Development/Libraries
+Requires:      %{name} = %{version}-%{release}
+
+%description devel
+BCG729 codec plugin for mediastreamer2.
+
+%prep
+%setup -q
+
+%build
+%configure --enable-static
+%__make %{?_smp_mflags}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+%makeinstall
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%doc AUTHORS COPYING ChangeLog INSTALL NEWS README
+%{_libdir}/*
+
+%files devel
+%defattr(-,root,root)
+%{_includedir}/bcg729
+%{_includedir}/*
+%{_libdir}/*
+
+%changelog
+* Mon Jan 12 2014 Margaux Clerc <margaux.clerc@belledonne-communications.com> 
+- Creation of rpm for linphone

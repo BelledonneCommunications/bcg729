@@ -16,4 +16,5 @@ libbcg729.pc
 test/src/decoderTest
 test/src/encoderTest
 .libs
+bcg729.spec
 
