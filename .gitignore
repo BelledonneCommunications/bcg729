@@ -18,3 +18,13 @@ test/src/encoderTest
 .libs
 bcg729.spec
 
+compile
+config.guess
+config.h.in
+depcomp
+install-sh
+ltmain.sh
+m4
+missing
+test-driver
+config.sub
