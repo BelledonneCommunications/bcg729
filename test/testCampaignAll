@@ -1,9 +1,10 @@
-#! /bin/sh
+#! /bin/bash
 # This script check if we have the tests patterns and download them if needed
 # then run all available tests
 
 # Do we have a patterns directory
 if [ ! -d "patterns" ]; then
+	rm -f ./bcg729-patterns.zip
    # no pattern directory: download it from 
    # http://www.belledonne-communications.com/downloads/bcg729-patterns.zip
    wget http://www.belledonne-communications.com/downloads/bcg729-patterns.zip
