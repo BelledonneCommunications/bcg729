@@ -29,4 +29,4 @@ postProcessingTest_SOURCES=$(top_srcdir)/test/src/postProcessingTest.c $(util_sr
 preProcessingTest_SOURCES=$(top_srcdir)/test/src/preProcessingTest.c $(util_src)
 
 LDADD=	$(top_builddir)/src/libbcg729.la 
-AM_CCPFLAGS=-I$(top_srcdir)/include/
+AM_CPPFLAGS=-I$(top_srcdir)/include/

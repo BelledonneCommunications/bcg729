@@ -29,3 +29,5 @@ fi
 
 # run all the tests
 ./testCampaign all 
+
+exit 0
