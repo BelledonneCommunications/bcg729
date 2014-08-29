@@ -54,7 +54,7 @@ esac
 AC_SUBST(VISIBILITY_CFLAGS)
 
 # Initialize libtool
-LT_INIT([win32-dll shared disable-static])
+LT_INIT([win32-dll shared ])
 
 AC_CONFIG_COMMANDS([libtool-hacking],
 	[if test "$mingw_found" = "yes" ; then
