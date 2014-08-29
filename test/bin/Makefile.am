@@ -30,3 +30,4 @@ preProcessingTest_SOURCES=$(top_srcdir)/test/src/preProcessingTest.c $(util_src)
 
 LDADD=	$(top_builddir)/src/libbcg729.la 
 AM_CPPFLAGS=-I$(top_srcdir)/include/
+AM_LDFLAGS=-all-static
