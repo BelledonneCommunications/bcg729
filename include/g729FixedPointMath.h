@@ -127,21 +127,20 @@ static BCG729_INLINE word32_t g729Exp2_Q11Q16(word16_t x)
 #define C3 4204
 /*****************************************************************************/
 /* g729Sqrt_Q0Q7 : Square root                                               */
-/*      x is not tested to be >=0, shall be done by caller function          */
 /*    paremeters:                                                            */
-/*      -(i) x : 32 bits integer in Q0                                       */
+/*      -(i) x : 32 bits unsigned integer in Q0                              */
 /*    return value:                                                          */
-/*      - sqrt(x) in Q7 on 32 bits                                           */
+/*      - sqrt(x) in Q7 on 32 bits signed integer                            */
 /*                                                                           */
 /*****************************************************************************/
-static BCG729_INLINE word32_t g729Sqrt_Q0Q7(word32_t x)
+static BCG729_INLINE word32_t g729Sqrt_Q0Q7(uword32_t x)
 {
 	int k;
 	word32_t rt;
 
 	if (x==0) return 0;
 	/* set x in Q14 in range [0.25,1[ */
-	k = (18-countLeadingZeros(x))>>1;
+	k = (19-unsignedCountLeadingZeros(x))>>1;
 	x = VSHR32(x, (k<<1)); /* x = x.2^-2k */
 
 	/* sqrt(x) ~= 0.22178 + 1.29227*x - 0.77070*x^2 + 0.25659*x^3 (for .25 < x < 1) */

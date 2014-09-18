@@ -105,6 +105,27 @@ static BCG729_INLINE uint16_t countLeadingZeros(word32_t x)
 	return leadingZeros;
 }
 
+/*****************************************************************************/
+/* unsignedCountLeadingZeros : return the number of zero heading the argument*/
+/*      May be replaced by one asm instruction.                              */
+/*    parameters :                                                           */
+/*      -(i) x : 32 bits unsigned int values                                 */
+/*    return value :                                                         */
+/*      - number of heading zeros(MSB included. Ex: 0x0080 00000 returns 8)  */
+/*                                                                           */
+/*****************************************************************************/
+static BCG729_INLINE uint16_t unsignedCountLeadingZeros(uword32_t x)
+{
+	uint16_t leadingZeros = 0;
+	if (x==0) return 32;
+	while ((x&0x80000000)!=(uword32_t)0x80000000) {
+		leadingZeros++;
+		x <<=1;
+	}
+	return leadingZeros;
+}
+
+
 /*** gain related functions ***/
 /*****************************************************************************/
 /* MACodeGainPrediction : spec 3.9.1                                         */

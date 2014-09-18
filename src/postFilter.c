@@ -77,7 +77,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	word32_t rh1;
 	word16_t tiltCompensatedSignal[L_SUBFRAME]; /* in Q0 */
 	word16_t gainScalingFactor; /* in Q12 */
-	word32_t shortTermFilteredResidualSignalSquareSum = 0;
+	uword32_t shortTermFilteredResidualSignalSquareSum = 0;
 
 	/********************************************************************/
 	/* Long Term Post Filter                                            */
@@ -281,9 +281,9 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	/********************************************************************/
 
 	/*** compute G(gain scaling factor) according to eqA15 : G = Sqrt((∑s(n)^2)/∑sf(n)^2 ) ***/
-	/* compute ∑sf(n)^2 scale the signal shifting left by 2 to avoid overflow on 32 bits sum */
+	/* compute ∑sf(n)^2, scale the signal shifting right by 4 to avoid possible overflow on 32 bits sum */
 	for (i=0; i<L_SUBFRAME; i++) {
-		shortTermFilteredResidualSignalSquareSum = MAC16_16_Q4(shortTermFilteredResidualSignalSquareSum, decoderChannelContext->shortTermFilteredResidualSignal[i], decoderChannelContext->shortTermFilteredResidualSignal[i]);
+		shortTermFilteredResidualSignalSquareSum = UMAC16_16_Q4(shortTermFilteredResidualSignalSquareSum, decoderChannelContext->shortTermFilteredResidualSignal[i], decoderChannelContext->shortTermFilteredResidualSignal[i]); /* inputs are both in Q0, output is in Q-4 */
 	}
 	
 	/* if the sum is null we can't compute gain -> output of postfiltering is the output of shortTermFilter and previousAdaptativeGain is set to 0 */
@@ -295,30 +295,30 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 		}
 	} else { /* we can compute adaptativeGain and output signal */
 		word16_t currentAdaptativeGain;
-		/* compute ∑s(n)^2 scale the signal shifting left by 2 to avoid overflow on 32 bits sum */
-		word32_t reconstructedSpeechSquareSum = 0;
+		/* compute ∑s(n)^2 scale the signal shifting right by 4 to avoid possible overflow on 32 bits sum, same shift was applied at denominator */
+		uword32_t reconstructedSpeechSquareSum = 0;
 		for (i=0; i<L_SUBFRAME; i++) {
-			reconstructedSpeechSquareSum = MAC16_16_Q4(reconstructedSpeechSquareSum, reconstructedSpeech[i], reconstructedSpeech[i]);
+			reconstructedSpeechSquareSum = UMAC16_16_Q4(reconstructedSpeechSquareSum, reconstructedSpeech[i], reconstructedSpeech[i]); /* inputs are both in Q0, output is in Q-4 */
 		}
 		
 		if (reconstructedSpeechSquareSum==0) { /* numerator is null -> current gain is null */
 			gainScalingFactor = 0;	
 		} else {
-			word32_t fractionResult; /* stores  ∑s(n)^2)/∑sf(n)^2 */
+			uword32_t fractionResult; /* stores  ∑s(n)^2)/∑sf(n)^2 in Q10 on a 32 bit unsigned */
 			word32_t scaledShortTermFilteredResidualSignalSquareSum;
 			/* Compute ∑s(n)^2)/∑sf(n)^2  result shall be in Q10 */
 			/* normalise the numerator on 32 bits */
-			word16_t numeratorShift = countLeadingZeros(reconstructedSpeechSquareSum);
-			reconstructedSpeechSquareSum = SHL(reconstructedSpeechSquareSum, numeratorShift); /* reconstructedSpeechSquareSum*2^numeratorShift */
+			word16_t numeratorShift = unsignedCountLeadingZeros(reconstructedSpeechSquareSum);
+			reconstructedSpeechSquareSum = USHL(reconstructedSpeechSquareSum, numeratorShift); /* reconstructedSpeechSquareSum*2^numeratorShift */
 
 			/* normalise denominator to get the result directly in Q10 if possible */
 			scaledShortTermFilteredResidualSignalSquareSum = VSHR32(shortTermFilteredResidualSignalSquareSum, 10-numeratorShift); /* shortTermFilteredResidualSignalSquareSum*2^(numeratorShift-10)*/
 			
 			if (scaledShortTermFilteredResidualSignalSquareSum==0) {/* shift might have sent to zero the denominator */
-				fractionResult = DIV32(reconstructedSpeechSquareSum, shortTermFilteredResidualSignalSquareSum); /* result in QnumeratorShift */
+				fractionResult = UDIV32(reconstructedSpeechSquareSum, shortTermFilteredResidualSignalSquareSum); /* result in QnumeratorShift */
 				fractionResult = VSHR32(fractionResult, numeratorShift-10); /* result in Q10 */
 			} else { /* ok denominator is still > 0 */
-				fractionResult = DIV32(reconstructedSpeechSquareSum, scaledShortTermFilteredResidualSignalSquareSum); /* result in Q10 */
+				fractionResult = UDIV32(reconstructedSpeechSquareSum, scaledShortTermFilteredResidualSignalSquareSum); /* result in Q10 */
 			}
 			/* now compute current Gain =  Sqrt((∑s(n)^2)/∑sf(n)^2 ) */
 			/* g729Sqrt_Q0Q7(Q0)->Q7, by giving a Q10 as input, output is in Q12 */

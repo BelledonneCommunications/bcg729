@@ -28,6 +28,7 @@
 /*** shifts ***/
 #define SHR(a,shift) ((a) >> (shift))
 #define SHL(a,shift) ((word32_t)(a) << (shift))
+#define USHL(a,shift) ((uword32_t)(a) << (shift))
 /* shift right with rounding: used to extract the integer value of a Qa number */
 #define PSHR(a,shift) (SHR((a)+((EXTEND32(1)<<((shift))>>1)),shift))
 /* shift right with checking on sign of shift value */
@@ -53,13 +54,15 @@
 /* WARNING: MULT16_32_QX use MULT16_16 macro but the first multiplication must actually be a 16bits * 32bits with result on 32 bits and not a 16*16 */
 /*  MULT16_16 is then implemented here as a 32*32 bits giving result on 32 bits */
 #define MULT16_16(a,b)     ((word32_t)((word32_t)(a))*((word32_t)(b)))
+#define UMULT16_16(a,b)     ((uword32_t)((word32_t)(a))*((word32_t)(b)))
 #define MAC16_16(c,a,b) (ADD32((c),MULT16_16((a),(b))))
 #define MSU16_16(c,a,b) (SUB32((c),MULT16_16((a),(b))))
 #define DIV32(a,b) (((word32_t)(a))/((word32_t)(b)))
+#define UDIV32(a,b) (((uword32_t)(a))/((uword32_t)(b)))
 
-/* Q4 operations */
-#define MULT16_16_Q4(a,b) (SHR(MULT16_16((a),(b)),4))
-#define MAC16_16_Q4(c,a,b) ADD32(c,MULT16_16_Q4(a,b))
+/* Unsigned Q4 operations */
+#define UMULT16_16_Q4(a,b) (SHR(UMULT16_16((a),(b)),4))
+#define UMAC16_16_Q4(c,a,b) ADD32(c,UMULT16_16_Q4(a,b))
 
 /* Q11 operations */
 #define MULT16_16_Q11(a,b) (SHR(MULT16_16((a),(b)),11))
