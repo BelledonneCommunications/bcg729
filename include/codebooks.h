@@ -33,7 +33,7 @@ extern word16_t MAPredictorSum[L0_RANGE][NB_LSP_COEFF]; /* 1 - Sum(MAPredictor) 
 extern word16_t invMAPredictorSum[L0_RANGE][NB_LSP_COEFF]; /* 1/(1 - Sum(MAPredictor)) in Q3.12 */
 
 /* codebook for adaptative code vector */
-extern word16_t b30[30];
+extern word16_t b30[31];
 
 /* codebook for gains */
 extern uint16_t reverseIndexMappingGA[8];
