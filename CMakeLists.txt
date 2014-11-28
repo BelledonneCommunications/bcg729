@@ -46,7 +46,6 @@ endif()
 
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_PREFIX_PATH}/share/cmake/Modules)
-message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 
 include(CheckIncludeFile)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
@@ -75,7 +74,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY
 
 
 include_directories(
-	${MS2_INCLUDE_DIR}
 	include
 	src
 	${CMAKE_CURRENT_BINARY_DIR}

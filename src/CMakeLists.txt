@@ -20,11 +20,6 @@
 #
 ############################################################################
 
-set(BCG729_LIBS
-	${MS2_LIBRARIES}
-	${ORTP_LIBRARIES}
-)
-
 set(BCG729_SOURCE_FILES
 	adaptativeCodebookSearch.c
 	codebooks.c
@@ -62,7 +57,6 @@ if(MSVC)
 	endif()
 	set_target_properties(bcg729 PROPERTIES PREFIX "lib")
 endif()
-target_link_libraries(bcg729 ${BCG729_LIBS})
 
 install(TARGETS bcg729
 	RUNTIME DESTINATION bin

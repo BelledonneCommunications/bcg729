@@ -25,6 +25,8 @@ set(SOURCE_FILES
 	bcg729_enc.c
 )
 
+include_directories(${MS2_INCLUDE_DIRS})
+
 add_library(msbcg729 SHARED ${BCG729_SOURCE_FILES} ${SOURCE_FILES})
 set_target_properties(msbcg729 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION 0)
 if(MSVC)
@@ -36,7 +38,7 @@ if(MSVC)
 	endif()
 	set_target_properties(msbcg729 PROPERTIES PREFIX "lib")
 endif()
-target_link_libraries(msbcg729 ${BCG729_LIBS})
+target_link_libraries(msbcg729 ${MS2_LIBRARIES} ${ORTP_LIBRARIES})
 
 install(TARGETS msbcg729
 	RUNTIME DESTINATION lib/mediastreamer/plugins
