@@ -28,3 +28,5 @@ m4
 missing
 test-driver
 config.sub
+config.h
+stamp-h1
