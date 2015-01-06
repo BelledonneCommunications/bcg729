@@ -47,7 +47,7 @@ set(BCG729_SOURCE_FILES
 )
 
 add_library(bcg729 SHARED ${BCG729_SOURCE_FILES})
-set_target_properties(bcg729 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION 0)
+set_target_properties(bcg729 PROPERTIES VERSION 0)
 if(MSVC)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/libbcg729.pdb
