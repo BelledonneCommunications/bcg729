@@ -37,6 +37,9 @@
 #define L1_RANGE	(1<<L1_LENGTH)
 #define L2_RANGE	(1<<L2_LENGTH)
 #define L3_RANGE	(1<<L3_LENGTH)
+/* SID frame use a subset of L1 and L2 */
+#define NOISE_L1_RANGE 32
+#define NOISE_L2_RANGE 16
 
 /* MA Prediction history length: maximum number of previous LSP used */
 #define MA_MAX_K 4
@@ -109,5 +112,27 @@
 
 /*** LP to LSP conversion ***/
 #define NB_COMPUTED_VALUES_CHEBYSHEV_POLYNOMIAL 51
+
+/*** CNG ***/
+/* 1/2sqrt*(40) in Q1.13 */
+#define GAUSSIAN_EXCITATION_COEFF_FACTOR 25905
+/* 0.75 in Q15 */
+#define COEFF_K 24576
+
+/*** VAD ***/
+#define LOG2_240_Q16 518186
+#define INV_LOG2_10_Q15 9864
+
+/* buffer size for history on different values (defined in spec table B.1)*/
+#define Ni 32
+#define N0 128
+
+/*** DTX ***/
+/* 1.12202 in Q20 */
+#define THRESHOLD3_IN_Q20 1176553
+/* 1.20226 in Q20 */
+#define THRESHOLD1_IN_Q20 1260661
+#define CNG_DTX_RANDOM_SEED_INIT 11111
+
 
 #endif /* ifndef CODECPARAMETERS_H */

@@ -26,6 +26,7 @@
 /* signal and bitstream frame size in byte */
 #define SIGNAL_FRAME_SIZE 160
 #define BITSTREAM_FRAME_SIZE 10
+#define NOISE_BITSTREAM_FRAME_SIZE 2
 
 /* decoder struct: context for decoder channel and concealment */
 struct bcg729Decoder_struct {
@@ -49,11 +50,13 @@ static void filter_process(MSFilter *f){
 
 	while((inputMessage=ms_queue_get(f->inputs[0]))) {
 		while(inputMessage->b_rptr<inputMessage->b_wptr) {
+			/* if remaining data in RTP payload have the size of a SID frame it must be one, see RFC3551 section 4.5.6 : any SID frame must be the last one of the RPT payload */
+			uint8_t SIDFrameFlag = ((inputMessage->b_wptr-inputMessage->b_rptr)==NOISE_BITSTREAM_FRAME_SIZE)?1:0;
 			outputMessage = allocb(SIGNAL_FRAME_SIZE,0);
 			mblk_meta_copy(inputMessage, outputMessage);
-			bcg729Decoder(obj->decoderChannelContext, inputMessage->b_rptr, 0, (int16_t *)(outputMessage->b_wptr));
+			bcg729Decoder(obj->decoderChannelContext, inputMessage->b_rptr, 0, SIDFrameFlag, (int16_t *)(outputMessage->b_wptr));
 			outputMessage->b_wptr+=SIGNAL_FRAME_SIZE;
-			inputMessage->b_rptr+=BITSTREAM_FRAME_SIZE;
+			inputMessage->b_rptr += (SIDFrameFlag==1)?NOISE_BITSTREAM_FRAME_SIZE:BITSTREAM_FRAME_SIZE;
 			ms_queue_put(f->outputs[0],outputMessage);
 			ms_concealer_inc_sample_time(obj->concealer,f->ticker->time,10, 1);
 		}
@@ -62,7 +65,7 @@ static void filter_process(MSFilter *f){
 
 	if (ms_concealer_context_is_concealement_required(obj->concealer, f->ticker->time)) {
 		outputMessage = allocb(SIGNAL_FRAME_SIZE,0);
-		bcg729Decoder(obj->decoderChannelContext, NULL, 1, (int16_t *)(outputMessage->b_wptr));
+		bcg729Decoder(obj->decoderChannelContext, NULL, 1, 0, (int16_t *)(outputMessage->b_wptr));
 		outputMessage->b_wptr+=SIGNAL_FRAME_SIZE;
 		mblk_set_plc_flag(outputMessage, 1);
 		ms_queue_put(f->outputs[0],outputMessage);

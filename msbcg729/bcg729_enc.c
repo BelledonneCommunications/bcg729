@@ -24,11 +24,12 @@
 
 /*filter common method*/
 struct bcg729Encoder_struct {
-    bcg729EncoderChannelContextStruct *encoderChannelContext;
+	bcg729EncoderChannelContextStruct *encoderChannelContext;
 	MSBufferizer *bufferizer;
 	unsigned char ptime;
 	unsigned char max_ptime;
 	uint32_t ts;
+	uint8_t enableVAD;
 };
 
 static void filter_init(MSFilter *f){
@@ -37,12 +38,13 @@ static void filter_init(MSFilter *f){
 	obj = (struct bcg729Encoder_struct*) f->data;
 	obj->ptime=20;
 	obj->max_ptime=100;
+	obj->enableVAD=0;
 }
 
 static void filter_preprocess(MSFilter *f){
 	struct bcg729Encoder_struct* obj= (struct bcg729Encoder_struct*) f->data;
 
-	obj->encoderChannelContext = initBcg729EncoderChannel(); /* initialize bcg729 encoder, return context */
+	obj->encoderChannelContext = initBcg729EncoderChannel(obj->enableVAD); /* initialize bcg729 encoder, return context */
 	obj->bufferizer=ms_bufferizer_new();
 }
 
@@ -59,17 +61,23 @@ static void filter_process(MSFilter *f){
 	
 	/* process ptimes ms of data : (ptime in ms)/1000->ptime is seconds * 8000(sample rate) * 2(byte per sample) */
 	while(ms_bufferizer_get_avail(obj->bufferizer)>=obj->ptime*16){
+		uint16_t totalPacketDataLength = 0;
+		uint8_t bitStreamLength = 0;
 		outputMessage = allocb(obj->ptime,0); /* output bitStream is 80 bits long * number of samples */
 		/* process buffer in 10 ms frames */
-		for (bufferIndex=0; bufferIndex<obj->ptime; bufferIndex+=10) {
+		/* RFC3551 section 4.5.6 we must end the RTP payload of G729 frames when transmitting a SID frame : bitStreamLength == 2 */
+		for (bufferIndex=0; (bufferIndex<obj->ptime) && (bitStreamLength!=2); bufferIndex+=10) {
 			ms_bufferizer_read(obj->bufferizer,inputBuffer,160);
-			bcg729Encoder(obj->encoderChannelContext, (int16_t *)inputBuffer, outputMessage->b_wptr);
-			outputMessage->b_wptr+=10;
-
+			bcg729Encoder(obj->encoderChannelContext, (int16_t *)inputBuffer, outputMessage->b_wptr, &bitStreamLength);
+			outputMessage->b_wptr+=bitStreamLength;
+			totalPacketDataLength+=bitStreamLength;
 		}
-		obj->ts+=obj->ptime*8;
-		mblk_set_timestamp_info(outputMessage,obj->ts);
-		ms_queue_put(f->outputs[0],outputMessage);
+		obj->ts+=bufferIndex*8;
+		/* do not enqueue the message if no data out (DTX untransmitted frames) */
+		if (totalPacketDataLength>0) {
+			mblk_set_timestamp_info(outputMessage,obj->ts);
+			ms_queue_put(f->outputs[0],outputMessage);
+		}
 	}
 
 }
@@ -110,7 +118,14 @@ static int filter_add_fmtp(MSFilter *f, void *arg){
 		}
 		
 		ms_message("MSBCG729Enc: got ptime=%i",obj->ptime);
+	} else if (fmtp_get_value(fmtp,"annexb",buf,sizeof(buf))){
+		if (strncmp(buf, "yes",3)) {
+			obj->enableVAD = 1;
+			ms_message("MSBCG729Enc: enable VAD/DTX - AnnexB");
+		}
+
 	}
+	/* parse annexB param here */
 	return 0;
 }
 

@@ -1,6 +1,6 @@
 check_PROGRAMS=adaptativeCodebookSearchTest computeAdaptativeCodebookGainTest computeLPTest computeWeightedSpeechTest decodeAdaptativeCodeVectorTest decodeFixedCodeVectorTest decodeGainsTest decodeLSPTest \
        decoderTest encoderTest decoderMultiChannelTest encoderMultiChannelTest findOpenLoopPitchDelayTest fixedCodebookSearchTest g729FixedPointMathTest gainQuantizationTest interpolateqLSPAndConvert2LPTest \
-       LP2LSPConversionTest LPSynthesisFilterTest LSPQuantizationTest postFilterTest postProcessingTest preProcessingTest
+       LP2LSPConversionTest LPSynthesisFilterTest LSPQuantizationTest postFilterTest postProcessingTest preProcessingTest computeNoiseExcitationTest CNGdecoderTest encoderVADTest
 util_src=$(top_srcdir)/test/src/testUtils.c
 
 adaptativeCodebookSearchTest_SOURCES=$(top_srcdir)/test/src/adaptativeCodebookSearchTest.c $(util_src)
@@ -12,6 +12,7 @@ decodeFixedCodeVectorTest_SOURCES=$(top_srcdir)/test/src/decodeFixedCodeVectorTe
 decodeGainsTest_SOURCES=$(top_srcdir)/test/src/decodeGainsTest.c $(util_src)
 decodeLSPTest_SOURCES=$(top_srcdir)/test/src/decodeLSPTest.c $(util_src)
 decoderTest_SOURCES=$(top_srcdir)/test/src/decoderTest.c $(util_src)
+CNGdecoderTest_SOURCES=$(top_srcdir)/test/src/CNGdecoderTest.c $(util_src)
 decoderMultiChannelTest_SOURCES=$(top_srcdir)/test/src/decoderMultiChannelTest.c $(util_src)
 encoderTest_SOURCES=$(top_srcdir)/test/src/encoderTest.c $(util_src)
 encoderMultiChannelTest_SOURCES=$(top_srcdir)/test/src/encoderMultiChannelTest.c $(util_src)
@@ -27,7 +28,9 @@ LSPQuantizationTest_SOURCES=$(top_srcdir)/test/src/LSPQuantizationTest.c $(util_
 postFilterTest_SOURCES=$(top_srcdir)/test/src/postFilterTest.c $(util_src)
 postProcessingTest_SOURCES=$(top_srcdir)/test/src/postProcessingTest.c $(util_src)
 preProcessingTest_SOURCES=$(top_srcdir)/test/src/preProcessingTest.c $(util_src)
+computeNoiseExcitationTest_SOURCES=$(top_srcdir)/test/src/computeNoiseExcitationTest.c $(util_src)
+encoderVADTest_SOURCES=$(top_srcdir)/test/src/encoderVADTest.c $(util_src)
 
 LDADD=	$(top_builddir)/src/libbcg729.la 
-AM_CPPFLAGS=-I$(top_srcdir)/include/
+AM_CPPFLAGS=-I$(top_srcdir)/include/ -I$(top_srcdir)/src/
 AM_LDFLAGS=-all-static

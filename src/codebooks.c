@@ -191,6 +191,12 @@ word16_t L2L3[L2_RANGE][NB_LSP_COEFF] = { /* The second stage is a 10-bit VQ spl
 	{ -163,   674,   -11,  -886,   531, -1125,  -265,  -242,   724,   934}
 };
 
+/* index used by CNG to reach a subset of L1, L2 and L3 codebooks  */
+uint8_t L1SubsetIndex[32] = {96,52,20,54,86,114,82,68,36,121,48,92,18,120,
+                         94,124,50,125,4,100,28,76,12,117,81,22,90,116,
+                         127,21,108,66};
+uint8_t L2SubsetIndex[16] = {31,21,9,3,10,2,19,26,4,3,11,29,15,27,21,12};
+uint8_t L3SubsetIndex[16] = {16,1,0,0,8,25,22,20,19,23,20,31,4,31,20,31};
 
 word16_t MAPredictor[L0_RANGE][MA_MAX_K][NB_LSP_COEFF] = { /* the MA predictor coefficients in Q0.15 but max value < 0.5 so it fits on 15 bits */
 	{
@@ -216,6 +222,35 @@ word16_t invMAPredictorSum[L0_RANGE][NB_LSP_COEFF] = {/* 1/(1 - Sum(MAPredictor)
 	{17210, 15888, 16357, 16183, 16516, 15833, 15888, 15421, 14840, 15597},
 	{ 9202,  7320,  6788,  7738,  8170,  8154,  8856,  8818,  8366,  8544}
 };
+
+/* DTX/CNG use different values for MA predictor */
+word16_t noiseMAPredictor[L0_RANGE][MA_MAX_K][NB_LSP_COEFF] = { /* the MA predictor coefficients in Q0.15 but max value < 0.5 so it fits on 15 bits */
+	{
+		{ 8421,  9109,  9175,  8965,  9034,  9057,  8765,  8775,  9106,  8673},
+		{ 7018,  7189,  7638,  7307,  7444,  7379,  7038,  6956,  6930,  6868},
+		{ 5472,  4990,  5134,  5177,  5246,  5141,  5206,  5095,  4830,  5147},
+		{ 4056,  3031,  2614,  3024,  2916,  2713,  3309,  3237,  2857,  3473}
+	},
+	{
+		{ 8145,  8617,  8779,  8648,  8718,  8829,  8713,  8705,  8806,  8231 },
+		{ 5894,  5525,  5603,  5773,  6016,  5968,  5896,  5835,  5721,  5707 },  
+		{ 4568,  3765,  3605,  3963,  4144,  4038,  4225,  4139,  3914,  4255 },  
+		{ 3643,  2455,  1944,  2466,  2438,  2259,  2798,  2775,  2479,  3124 }
+	}
+};
+
+word16_t noiseMAPredictorSum[L0_RANGE][NB_LSP_COEFF] = {/* 1 - Sum(MAPredictor) in Q0.15 */
+	{ 7798,  8447,  8205,  8293,  8126,  8477,  8447,  8703,  9043,  8604},
+	{10514, 12402, 12833, 11914, 11447, 11670, 11132, 11311, 11844, 11447}
+};
+
+word16_t invNoiseMAPredictorSum[L0_RANGE][NB_LSP_COEFF] = {/* 1/(1 - Sum(MAPredictor)) in Q3.12 */
+	{17210, 15888, 16357, 16183, 16516, 15833, 15888, 15421, 14840, 15597},
+	{12764, 10821, 10458, 11264, 11724, 11500, 12056, 11865, 11331, 11724}
+};
+
+
+
 
 /* codebook for adaptative code vector */
 word16_t b30[31] = { /* in Q0.15 */
@@ -291,6 +326,31 @@ word16_t wlp[L_LP_ANALYSIS_WINDOW] = { /* in Q15 */
  23055, 22117, 21145, 20139, 19102, 18036, 16941, 15820, 14674, 13505,
  12315, 11106,  9879,  8637,  7381,  6114,  4838,  3554,  2264,   971};
 
-/* lag window as defined in spec 3.2.1 eq6 */
-word16_t wlag[NB_LSP_COEFF+1] = { /* in Q15 note first coeff is not used */
-32767, 32728, 32619, 32438, 32187, 31867, 31480, 31029, 30517, 29946, 29321};
+/* lag window as defined in spec 3.2.1 eq6 : up to 12 values for VAD */
+/* wlag[0] =  1.00000000    not used
+   wlag[1] =  0.99879038                            
+   wlag[2] =  0.99546897                            
+   wlag[3] =  0.98995781                            
+   wlag[4] =  0.98229337                            
+   wlag[5] =  0.97252619                            
+   wlag[6] =  0.96072036                            
+   wlag[7] =  0.94695264                            
+   wlag[8] =  0.93131179                            
+   wlag[9] =  0.91389757                            
+   wlag[10]=  0.89481968                            
+   wlag[11]=  0.87419660                            
+   wlag[12]=  0.85215437
+*/
+word16_t wlag[NB_LSP_COEFF+3] = { /* in Q15 note first coeff is not used */
+32767, 32728, 32619, 32438, 32187, 31867, 31480, 31029, 30517, 29946, 29321, 28646, 27923};
+
+/* quantised SID gain retrieved from ITU code, in Q3 */
+word16_t SIDGainCodebook[32] = {
+    2,    5,    8,   13,   20,   32,   50,   64,
+   80,  101,  127,  160,  201,  253,  318,  401,
+  505,  635,  800, 1007, 1268, 1596, 2010, 2530,
+ 3185, 4009, 5048, 6355, 8000,10071,12679,15962 };
+
+/* Low Band Filter FIR for VAD in Q15 */
+word16_t lowBandFilter[NB_LSP_COEFF+3] = {7869, 7011, 4838, 2299, 321, -660, -782, -484, -164, 3, 39, 21, 4};
+

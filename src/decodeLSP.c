@@ -48,6 +48,70 @@ void initDecodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext)
 	}
 }
 
+
+//[MA_MAX_K][NB_LSP_COEFF]; /* in Q2.13, buffer to store the last 4 frames codewords, used to compute the current qLSF */
+
+/*****************************************************************************/
+/* computeqLSF : get qLSF extracted from codebooks and process them          */
+/*         according to spec 3.2.4                                           */
+/*    parameters:                                                            */
+/*      -(i/o) codebookqLSF : 10 values i Q2.13 to be updated                */
+/*      -(i/o) previousCodeWord : codewords for the last 4 subframes in Q2.13*/
+/*                                is updated by this function                */
+/*      -(i) L0: the Switched MA predictor retrieved from bitstream          */
+/*                                                                           */
+/*****************************************************************************/
+void computeqLSF(word16_t *codebookqLSF, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t L0, word16_t currentMAPredictor[L0_RANGE][MA_MAX_K][NB_LSP_COEFF], word16_t currentMAPredictorSum[L0_RANGE][NB_LSP_COEFF]) {
+	int i,j;
+	word32_t acc; /* Accumulator in Q2.28 */
+
+	/*** rearrange in order to have a minimum distance between two consecutives coefficients ***/
+	rearrangeCoefficients(codebookqLSF, GAP1); 
+	rearrangeCoefficients(codebookqLSF, GAP2); /* codebookqLSF still in Q2.13 */
+
+	/*** doc 3.2.4 eq(20) ***/
+	/* compute the qLSF as a weighted sum(weighted by MA coefficient selected according to L0 value) of previous and current frame L codewords coefficients */
+
+	/* L0 is the Switched MA predictor of LSP quantizer(1 bit) */
+	/* codebookqLSF and previousLCodeWord in Q2.13 */
+	/* MAPredictor and MAPredictorSum in Q0.15 with MAPredictorSum[MA switch][i]+Sum[j=0-3](MAPredictor[MA switch][j][i])=1 -> acc will end up being in Q2.28*/
+	/* Note : previousLCodeWord array containing the last 4 code words is updated during this phase */
+
+	for (i=0; i<NB_LSP_COEFF; i++) { 
+		acc = MULT16_16(currentMAPredictorSum[L0][i], codebookqLSF[i]);
+		for (j=MA_MAX_K-1; j>=0; j--) {
+			acc = MAC16_16(acc, currentMAPredictor[L0][j][i], previousLCodeWord[j][i]); 
+			previousLCodeWord[j][i] = (j>0)?previousLCodeWord[j-1][i]:codebookqLSF[i]; /* update the previousqLCodeWord array: row[0] = current code word and row[j]=row[j-1] */
+		}
+		/* acc in Q2.28, shift back the acc to a Q2.13 with rounding */
+		codebookqLSF[i] = (word16_t)PSHR(acc, 15); /* codebookqLSF in Q2.13 */
+	}
+	/* Note : codebookqLSF buffer now contains qLSF */
+
+	/*** doc 3.2.4 qLSF stability ***/
+	/* qLSF in Q2.13 as are qLSF_MIN and qLSF_MAX and MIN_qLSF_DISTANCE */
+	
+	/* sort the codebookqLSF array */
+	insertionSort(codebookqLSF, NB_LSP_COEFF);
+
+	/* check for low limit on qLSF[0] */
+	if (codebookqLSF[1]<qLSF_MIN) {
+		codebookqLSF[1] = qLSF_MIN;
+	}
+
+	/* check and rectify minimum distance between two consecutive qLSF */
+	for (i=0; i<NB_LSP_COEFF-1; i++) {
+		if (SUB16(codebookqLSF[i+1],codebookqLSF[i])<MIN_qLSF_DISTANCE) {
+			codebookqLSF[i+1] = codebookqLSF[i]+MIN_qLSF_DISTANCE;
+		}
+	}
+
+	/* check for upper limit on qLSF[NB_LSP_COEFF-1] */
+	if (codebookqLSF[NB_LSP_COEFF-1]>qLSF_MAX) {
+		codebookqLSF[NB_LSP_COEFF-1] = qLSF_MAX;
+	}
+}
+
 /*****************************************************************************/
 /* decodeLSP : decode LSP coefficients as in spec 4.1.1/3.2.4                */
 /*    parameters:                                                            */
@@ -65,7 +129,6 @@ void decodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext, uint16_
 
 
 	if (frameErased == 0) { /* frame is ok, proceed according to 3.2.4 section of the doc */
-		word32_t acc; /* Accumulator in Q2.28 */
 
 		/*** doc 3.2.4 eq(19) ***/
 		/* get the L codewords from the codebooks L1, L2 and L3 */
@@ -81,51 +144,7 @@ void decodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext, uint16_
 			currentqLSF[i] = ADD16(L1[L[1]][i], L2L3[L[3]][i]); /* same as previous, output in Q2.13 */
 		}
 
-		/*** rearrange in order to have a minimum distance between two consecutives coefficients ***/
-		rearrangeCoefficients(currentqLSF, GAP1); 
-		rearrangeCoefficients(currentqLSF, GAP2); /* currentqLSF still in Q2.13 */
-
-		/*** doc 3.2.4 eq(20) ***/
-		/* compute the qLSF as a weighted sum(weighted by MA coefficient selected according to L0 value) of previous and current frame L codewords coefficients */
-	
-		/* L[0] is the Switched MA predictor of LSP quantizer(1 bit) */
-		/* currentqLSF and previousLCodeWord in Q2.13 */
-		/* MAPredictor and MAPredictorSum in Q0.15 with MAPredictorSum[MA switch][i]+Sum[j=0-3](MAPredictor[MA switch][j][i])=1 -> acc will end up being in Q2.28*/
-		/* Note : previousLCodeWord array containing the last 4 code words is updated during this phase */
-
-		for (i=0; i<NB_LSP_COEFF; i++) { 
-			acc = MULT16_16(MAPredictorSum[L[0]][i], currentqLSF[i]);
-			for (j=MA_MAX_K-1; j>=0; j--) {
-				acc = MAC16_16(acc, MAPredictor[L[0]][j][i], decoderChannelContext->previousLCodeWord[j][i]); 
-				decoderChannelContext->previousLCodeWord[j][i] = (j>0)?decoderChannelContext->previousLCodeWord[j-1][i]:currentqLSF[i]; /* update the previousqLCodeWord array: row[0] = current code word and row[j]=row[j-1] */
-			}
-			/* acc in Q2.28, shift back the acc to a Q2.13 with rounding */
-			currentqLSF[i] = (word16_t)PSHR(acc, 15); /* currentqLSF in Q2.13 */
-		}
-		/* Note : currentqLSF buffer now contains qLSF */
-
-		/*** doc 3.2.4 qLSF stability ***/
-		/* qLSF in Q2.13 as are qLSF_MIN and qLSF_MAX and MIN_qLSF_DISTANCE */
-		
-		/* sort the currentqLSF array */
-		insertionSort(currentqLSF, NB_LSP_COEFF);
-	
-		/* check for low limit on qLSF[0] */
-		if (currentqLSF[1]<qLSF_MIN) {
-			currentqLSF[1] = qLSF_MIN;
-		}
-	
-		/* check and rectify minimum distance between two consecutive qLSF */
-		for (i=0; i<NB_LSP_COEFF-1; i++) {
-			if (SUB16(currentqLSF[i+1],currentqLSF[i])<MIN_qLSF_DISTANCE) {
-				currentqLSF[i+1] = currentqLSF[i]+MIN_qLSF_DISTANCE;
-			}
-		}
-
-		/* check for upper limit on qLSF[NB_LSP_COEFF-1] */
-		if (currentqLSF[NB_LSP_COEFF-1]>qLSF_MAX) {
-			currentqLSF[NB_LSP_COEFF-1] = qLSF_MAX;
-		}
+		computeqLSF(currentqLSF, decoderChannelContext->previousLCodeWord, L[0], MAPredictor, MAPredictorSum); /* use regular MAPredictor as this function is not called on SID frame decoding */
 
 		/* backup the qLSF and L0 to restore them in case of frame erased */
 		for (i=0; i<NB_LSP_COEFF; i++) {

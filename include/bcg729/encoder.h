@@ -31,11 +31,13 @@ typedef struct bcg729EncoderChannelContextStruct_struct bcg729EncoderChannelCont
 
 /*****************************************************************************/
 /* initBcg729EncoderChannel : create context structure and initialise it     */
+/*    parameters:                                                            */
+/*      -(i) enanbleVAD : flag set to 1: VAD/DTX is enabled                  */
 /*    return value :                                                         */
 /*      - the encoder channel context data                                   */
 /*                                                                           */
 /*****************************************************************************/
-BCG729_VISIBILITY bcg729EncoderChannelContextStruct *initBcg729EncoderChannel();
+BCG729_VISIBILITY bcg729EncoderChannelContextStruct *initBcg729EncoderChannel(uint8_t enableVAD);
 
 /*****************************************************************************/
 /* closeBcg729EncoderChannel : free memory of context structure              */
@@ -51,8 +53,11 @@ BCG729_VISIBILITY void closeBcg729EncoderChannel(bcg729EncoderChannelContextStru
 /*      -(i) encoderChannelContext : context for this encoder channel        */
 /*      -(i) inputFrame : 80 samples (16 bits PCM)                           */
 /*      -(o) bitStream : The 15 parameters for a frame on 80 bits            */
-/*           on 80 bits (5 16bits words)                                     */
+/*           on 80 bits (5 16bits words) for voice frame, 4 on 2 byte for    */
+/*           noise frame, 0 for untransmitted frames                         */
+/*      -(o) bitStreamLength : actual length of output, may be 0, 2 or 10    */
+/*           if VAD/DTX is enabled                                           */
 /*                                                                           */
 /*****************************************************************************/
-BCG729_VISIBILITY void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[]);
+BCG729_VISIBILITY void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[], uint8_t *bitStreamLength);
 #endif /* ifndef ENCODER_H */

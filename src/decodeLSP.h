@@ -29,6 +29,20 @@
 void initDecodeLSP(bcg729DecoderChannelContextStruct *decoderChannelContext);
 
 /*****************************************************************************/
+/* computeqLSF : get qLSF extracted from codebooks and process them          */
+/*         according to spec 3.2.4                                           */
+/*    parameters:                                                            */
+/*      -(i/o) codebookqLSF : 10 values i Q2.13 to be updated                */
+/*      -(i/o) previousCodeWord : codewords for the last 4 subframes in Q2.13*/
+/*                                is updated by this function                */
+/*      -(i) L0: the Switched MA predictor retrieved from bitstream          */
+/*      -(i) currentMAPredictor : MAPredictor to use, noise or voice frame   */
+/*      -(i) currentMAPredictorSum : same as previous                        */
+/*                                                                           */
+/*****************************************************************************/
+void computeqLSF(word16_t *codebookqLSF, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t L0, word16_t currentMAPredictor[L0_RANGE][MA_MAX_K][NB_LSP_COEFF], word16_t currentMAPredictorSum[L0_RANGE][NB_LSP_COEFF]); 
+
+/*****************************************************************************/
 /* decodeLSP : decode LSP coefficients as in spec 4.1.1/3.2.4                */
 /*    parameters:                                                            */
 /*      -(i/o) decoderChannelContext : the channel context data              */

@@ -32,6 +32,58 @@ typedef int32_t word32_t;
 typedef uint32_t uword32_t;
 typedef int64_t word64_t;
 
+struct bcg729VADChannelContextStruct_struct {
+	/* buffer used during the init period - first N0(32) frames */
+	word32_t initEfSum;
+	word32_t initZCSum;
+	word32_t initLSFSum[NB_LSP_COEFF];
+	uint8_t nbValidInitFrame; /* VAD init needs 32 frames to be completed but we must use only frame with Ef > 15dB so we must count them */
+
+
+	word16_t meanZC; /* in Q15 */
+	word16_t meanEf; /* in Q11 */
+	word16_t meanEl; /* in Q11 */
+	word16_t meanLSF[NB_LSP_COEFF]; /* in Q2.13 */
+	uint32_t frameCount; /* number of frame processed, used to close the initialisation period */
+	uint32_t updateCount; /* number of frame leading to an update of running averages */
+	word16_t EfBuffer[N0]; /* store the last N0 Ef values to be able to retrieve the min */
+	uint8_t SVDm1; /* smoothed voice activity decision on last frame */
+	uint8_t SVDm2; /* smoothed voice activity decision on 2 frames ago */
+	uint32_t Count_inert; /* defined in appendix II, used to implement hysteresis on VOICE->NOISE switching */
+	uint8_t secondStageVADSmoothingFlag; /* flag defined as FVD-1 in spec B3.6 */
+	uint32_t smoothingCounter; /* counter Ce defined in spec B3.6 */
+	word16_t previousFrameEf; /* in Q11 */
+	word32_t noiseContinuityCounter; /* counter Cs defined in spec B3.6 */
+};
+typedef struct bcg729VADChannelContextStruct_struct bcg729VADChannelContextStruct;
+
+struct bcg729DTXChannelContextStruct_struct {
+	/* store past autocorrelations coefficients for 6 past frames and current one(at index 0) spec B4.1.1 */
+	word32_t autocorrelationCoefficients[7][NB_LSP_COEFF+1];
+	int8_t autocorrelationCoefficientsScale[7];
+
+	uint8_t previousVADflag; /* previous frame VAD : 1 VOICE 0 NOISE */
+	word32_t previousResidualEnergy;
+	uint8_t previousResidualEnergyScale;
+	int8_t previousDecodedLogEnergy; /* store the last decodedLog energy sent in a SID frame */
+	uint8_t count_fr; /* count the number of noise frame since last SID frame was sent */
+	word32_t SIDLPCoefficientAutocorrelation[NB_LSP_COEFF+1]; /* the autocorrelation of LP coefficients as described in eq B.13 in Q20 */
+	word16_t currentSIDGain; /* gain in Q3 */
+	word16_t smoothedSIDGain; /* gain in Q3 */
+	uint16_t pseudoRandomSeed; /* seed used in the pseudo random number generator for excitation generation */
+	word16_t qLSPCoefficients[NB_LSP_COEFF]; /* current Quantized LSP coefficient in Q15, saved to be re-used in case of untransmitted frame */
+};
+typedef struct bcg729DTXChannelContextStruct_struct bcg729DTXChannelContextStruct;
+
+struct bcg729CNGChannelContextStruct_struct {
+	word16_t receivedSIDGain; /* gain in Q3 */
+	word16_t smoothedSIDGain; /* gain in Q3 */
+	word16_t qLSP[NB_LSP_COEFF]; /* qLSP in Q0.15 */
+	word64_t lastFrameEnergy; /* in Q0 */
+};
+
+typedef struct bcg729CNGChannelContextStruct_struct bcg729CNGChannelContextStruct;
+
 /* define the context structure to store all static data for a decoder channel */
 struct bcg729DecoderChannelContextStruct_struct {
 	/*** buffers used in decoder bloc ***/
@@ -44,6 +96,7 @@ struct bcg729DecoderChannelContextStruct_struct {
 	word16_t fixedCodebookGain; /* in Q14.1 */
 	word16_t reconstructedSpeech[NB_LSP_COEFF+L_FRAME]; /* in Q0, output of the LP synthesis filter, the first 10 words store the previous frame output */
 	uint16_t pseudoRandomSeed; /* seed used in the pseudo random number generator */
+	uint16_t CNGpseudoRandomSeed; /* seed used in the pseudo random number generator for CNG */
 
 	/*** buffers used in decodeLSP bloc ***/
 	word16_t lastqLSF[NB_LSP_COEFF]; /* this buffer stores the last qLSF to be used in case of frame lost in Q2.13 */
@@ -72,6 +125,10 @@ struct bcg729DecoderChannelContextStruct_struct {
 	word16_t inputX1;
 	word32_t outputY2;
 	word32_t outputY1;
+
+	/* SID frame management */
+	bcg729CNGChannelContextStruct *CNGChannelContext; /* store informations specific to CNG */
+	uint8_t previousFrameIsActiveFlag; /* store last processed frame type */
 
 };
 
@@ -108,6 +165,9 @@ struct bcg729EncoderChannelContextStruct_struct {
 	/*** buffer used in gainQuantization ***/
 	word16_t previousGainPredictionError[4]; /* the last four gain prediction error U(m) eq69 and eq72, spec3.9.1 in Q10*/
 
+	/*** VAD management ***/
+	bcg729VADChannelContextStruct *VADChannelContext;
+	bcg729DTXChannelContextStruct *DTXChannelContext;
 };
 
 /* MAXINTXX define the maximum signed integer value on XX bits(2^(XX-1) - 1) */

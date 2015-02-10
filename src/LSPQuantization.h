@@ -33,4 +33,16 @@ void initLSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContex
 /*                                                                           */
 /*****************************************************************************/
 void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, word16_t LSPCoefficients[], word16_t qLSPCoefficients[], uint16_t parameters[]);
+
+/**********************************************************************************/
+/* noiseLSPQuantization : Convert LSP to LSF, Quantize LSF and find L parameters, */
+/*      qLSF->qLSP as described in spec A3.2.4                                    */
+/*    parameters:                                                                 */
+/*      -(i/o) previousqLSF : 4 previousqLSF, is updated by this function         */
+/*      -(i) LSPCoefficients : 10 LSP coefficients in Q15                         */
+/*      -(o) qLSPCoefficients : 10 qLSP coefficients in Q15                       */
+/*      -(o) parameters : 3 parameters L0, L1, L2                                 */
+/*                                                                                */
+/**********************************************************************************/
+void noiseLSPQuantization(word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF], word16_t LSPCoefficients[], word16_t qLSPCoefficients[], uint8_t parameters[]);
 #endif /* LSPQUANTIZATION_H */

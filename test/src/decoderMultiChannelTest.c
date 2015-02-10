@@ -120,7 +120,7 @@ int main(int argc, char *argv[] )
 						parametersArray2BitStream(inputBuffer, bitStream);
 
 						start = clock();
-						bcg729Decoder(decoderChannelContext[k], bitStream, inputBuffer[15], outputBuffer);
+						bcg729Decoder(decoderChannelContext[k], bitStream, inputBuffer[15], 0, outputBuffer);
 						end = clock();
 
 						cpu_time_used += ((double) (end - start));

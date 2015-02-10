@@ -83,7 +83,7 @@ int main(int argc, char *argv[] )
 	}
 	
 	/*** init of the tested bloc ***/
-	bcg729EncoderChannelContextStruct *encoderChannelContext = initBcg729EncoderChannel(0);
+	bcg729EncoderChannelContextStruct *encoderChannelContext = initBcg729EncoderChannel(1);
 
 	/*** initialisation complete ***/
 	/* perf measurement */
@@ -132,7 +132,7 @@ int main(int argc, char *argv[] )
 					for (i=1; i<NB_PARAMETERS; i++) {
 						fprintf(fpOutput,",%d",outputBuffer[i]);
 					}
-					fprintf(fpOutput,",0\n");
+					fprintf(fpOutput,",0,1\n");
 				}
 			} else if (bitStreamLength == 2) {
 					/* write the output to the output file */

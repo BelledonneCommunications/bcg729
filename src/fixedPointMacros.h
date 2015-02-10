@@ -44,6 +44,9 @@
 /* SATURATE Macro shall be called with MAXINT(nbits). Ex: SATURATE(x,MAXINT16) with MAXINT16  defined to 2pow(16) - 1 */
 #define SATURATE(x,a) (((x)>(a) ? (a) : (x)<-(a+1) ? -(a+1) : (x)))
 
+/* absolute value */
+#define ABS(a) ((a>0) ? a : -a)
+
 /*** add and sub ***/
 #define ADD16(a,b) ((word16_t)((word16_t)(a)+(word16_t)(b)))
 #define SUB16(a,b) ((word16_t)(a)-(word16_t)(b))
@@ -54,15 +57,23 @@
 /* WARNING: MULT16_32_QX use MULT16_16 macro but the first multiplication must actually be a 16bits * 32bits with result on 32 bits and not a 16*16 */
 /*  MULT16_16 is then implemented here as a 32*32 bits giving result on 32 bits */
 #define MULT16_16(a,b)     ((word32_t)((word32_t)(a))*((word32_t)(b)))
+#define MULT16_32(a,b)     ((word32_t)((word16_t)(a))*((word32_t)(b)))
 #define UMULT16_16(a,b)     ((uword32_t)((word32_t)(a))*((word32_t)(b)))
 #define MAC16_16(c,a,b) (ADD32((c),MULT16_16((a),(b))))
 #define MSU16_16(c,a,b) (SUB32((c),MULT16_16((a),(b))))
 #define DIV32(a,b) (((word32_t)(a))/((word32_t)(b)))
 #define UDIV32(a,b) (((uword32_t)(a))/((uword32_t)(b)))
 
-/* Unsigned Q4 operations */
+/* Q3 operations */
+#define MULT16_16_Q3(a,b) (SHR(MULT16_16((a),(b)),3))
+#define MULT16_32_Q3(a,b) ADD32(MULT16_16((a),SHR((b),3)), SHR(MULT16_16((a),((b)&0x00000007)),3))
+#define MAC16_16_Q3(c,a,b) ADD32(c,MULT16_16_Q3(a,b))
+
+/* Q4 operations */
+#define MULT16_16_Q4(a,b) (SHR(MULT16_16((a),(b)),4))
 #define UMULT16_16_Q4(a,b) (SHR(UMULT16_16((a),(b)),4))
 #define UMAC16_16_Q4(c,a,b) ADD32(c,UMULT16_16_Q4(a,b))
+#define MAC16_16_Q4(c,a,b) ADD32(c,MULT16_16_Q4(a,b))
 
 /* Q11 operations */
 #define MULT16_16_Q11(a,b) (SHR(MULT16_16((a),(b)),11))
@@ -79,14 +90,17 @@
 #define MULT16_16_Q13(a,b) (SHR(MULT16_16((a),(b)),13))
 #define MULT16_16_P13(a,b) (SHR(ADD32(4096,MULT16_16((a),(b))),13))
 #define MULT16_32_Q13(a,b) ADD32(MULT16_16((a),SHR((b),13)), SHR(MULT16_16((a),((b)&0x00001fff)),13))
+#define MAC16_16_Q13(c,a,b) ADD32(c,MULT16_16_Q13(a,b))
 #define MAC16_32_Q13(c,a,b) ADD32(c,MULT16_32_Q13(a,b))
 
 /* Q14 operations */
 #define MULT16_32_P14(a,b) ADD32(MULT16_16((a),SHR((b),14)), PSHR(MULT16_16((a),((b)&0x00003fff)),14))
+#define MULT16_32_Q14(a,b) ADD32(MULT16_16((a),SHR((b),14)), SHR(MULT16_16((a),((b)&0x00003fff)),14))
 #define MULT16_16_P14(a,b) (SHR(ADD32(8192,MULT16_16((a),(b))),14))
 #define MULT16_16_Q14(a,b) (SHR(MULT16_16((a),(b)),14))
 #define MAC16_16_Q14(c,a,b) ADD32(c,MULT16_16_Q14(a,b))
 #define MSU16_16_Q14(c,a,b) SUB32(c,MULT16_16_Q14(a,b))
+#define MAC16_32_Q14(c,a,b) ADD32(c,MULT16_32_Q14(a,b))
 
 /* Q15 operations */
 #define MULT16_16_Q15(a,b) (SHR(MULT16_16((a),(b)),15))
@@ -96,6 +110,8 @@
 #define MAC16_32_P15(c,a,b) ADD32(c,MULT16_32_P15(a,b))
 
 /* 64 bits operations */
+#define ADD64(a,b) ((word64_t)(a)+(word64_t)(b))
+#define SUB64(a,b) ((word64_t)(a)-(word32_t)(b))
 #define ADD64_32(a,b) ((word64_t)(a)+(word32_t)(b))
 #define MULT32_32(a,b) ((word64_t)((word64_t)(a)*((word64_t)(b))))
 #define DIV64(a,b) ((word64_t)(a)/(word64_t)(b))

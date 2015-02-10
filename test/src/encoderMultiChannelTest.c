@@ -93,7 +93,7 @@ int main(int argc, char *argv[] )
 		}
 
 		/*** init of the tested bloc ***/
-		encoderChannelContext[i] = initBcg729EncoderChannel();
+		encoderChannelContext[i] = initBcg729EncoderChannel(0);
 	}
 	
 
@@ -122,6 +122,8 @@ int main(int argc, char *argv[] )
 					while(1) /* infinite loop, escape condition is in the reading of data */
 					{
 						int i;
+						uint8_t bitStreamLength;
+
 						/* read the input data until we have some */
 						if (inputIsBinary[k]) {
 							if (fread(inputBuffer, sizeof(int16_t), L_FRAME, fpInput[k]) != L_FRAME) break;
@@ -135,21 +137,23 @@ int main(int argc, char *argv[] )
 						framesNbr++;
 						start = clock();
 
-						bcg729Encoder(encoderChannelContext[k], inputBuffer, bitStream);
+						bcg729Encoder(encoderChannelContext[k], inputBuffer, bitStream, &bitStreamLength);
 			
 						end = clock();
 						cpu_time_used += ((double) (end - start));
 						
-						/* convert bitStream output in an array for easier debug */
-						parametersBitStream2Array(bitStream, outputBuffer);
+						if (bitStreamLength == 10) {
+							/* convert bitStream output in an array for easier debug */
+							parametersBitStream2Array(bitStream, outputBuffer);
 
-						if (j==0) {
-							/* write the output to the output file */
-							fprintf(fpOutput[k],"%d",outputBuffer[0]);
-							for (i=1; i<NB_PARAMETERS; i++) {
-								fprintf(fpOutput[k],",%d",outputBuffer[i]);
+							if (j==0) {
+								/* write the output to the output file */
+								fprintf(fpOutput[k],"%d",outputBuffer[0]);
+								for (i=1; i<NB_PARAMETERS; i++) {
+									fprintf(fpOutput[k],",%d",outputBuffer[i]);
+								}
+								fprintf(fpOutput[k],",0\n");
 							}
-							fprintf(fpOutput[k],",0\n");
 						}
 					} 
 					/* we've reach the end of the file */

@@ -41,6 +41,9 @@
 #include "computeAdaptativeCodebookGain.h"
 #include "fixedCodebookSearch.h"
 #include "gainQuantization.h"
+#include "g729FixedPointMath.h"
+#include "vad.h"
+#include "dtx.h"
 
 /* buffers allocation */
 static const word16_t previousLSPInitialValues[NB_LSP_COEFF] = {30000, 26000, 21000, 15000, 8000, 0, -8000,-15000,-21000,-26000}; /* in Q0.15 the initials values for the previous LSP buffer */
@@ -51,10 +54,11 @@ static const word16_t previousLSPInitialValues[NB_LSP_COEFF] = {30000, 26000, 21
 /*      - the encoder channel context data                                   */
 /*                                                                           */
 /*****************************************************************************/
-bcg729EncoderChannelContextStruct *initBcg729EncoderChannel()
+bcg729EncoderChannelContextStruct *initBcg729EncoderChannel(uint8_t enableVAD)
 {
 	/* create the context structure */
 	bcg729EncoderChannelContextStruct *encoderChannelContext = malloc(sizeof(bcg729EncoderChannelContextStruct));
+	memset(encoderChannelContext, 0, sizeof(bcg729EncoderChannelContextStruct));
 
 	/* initialise statics buffers and variables */
 	memset(encoderChannelContext->signalBuffer, 0, (L_LP_ANALYSIS_WINDOW-L_FRAME)*sizeof(word16_t)); /* set to zero all the past signal */
@@ -66,6 +70,13 @@ bcg729EncoderChannelContextStruct *initBcg729EncoderChannel()
 	memset(encoderChannelContext->excitationVector, 0, L_PAST_EXCITATION*sizeof(word16_t)); /* set to zero values of previous excitation vector */
 	memset(encoderChannelContext->targetSignal, 0, NB_LSP_COEFF*sizeof(word16_t)); /* set to zero values filter memory for the targetSignal computation */
 	encoderChannelContext->lastQuantizedAdaptativeCodebookGain = O2_IN_Q14; /* quantized gain is initialized at his minimum value: 0.2 */
+	if (enableVAD == 1) {
+		encoderChannelContext->VADChannelContext = initBcg729VADChannel();
+		encoderChannelContext->DTXChannelContext = initBcg729DTXChannel();
+	} else {
+		encoderChannelContext->VADChannelContext = NULL;
+		encoderChannelContext->DTXChannelContext = NULL;
+	}
 
 	/* initialisation of the differents blocs which need to be initialised */
 	initPreProcessing(encoderChannelContext);
@@ -83,7 +94,15 @@ bcg729EncoderChannelContextStruct *initBcg729EncoderChannel()
 /*****************************************************************************/
 void closeBcg729EncoderChannel(bcg729EncoderChannelContextStruct *encoderChannelContext)
 {
-	free(encoderChannelContext);
+	if (encoderChannelContext) {
+		if (encoderChannelContext->VADChannelContext) {
+			free(encoderChannelContext->VADChannelContext);
+		}
+		if (encoderChannelContext->DTXChannelContext) {
+			free(encoderChannelContext->DTXChannelContext);
+		}
+		free(encoderChannelContext);
+	}
 }
 
 /*****************************************************************************/
@@ -95,13 +114,14 @@ void closeBcg729EncoderChannel(bcg729EncoderChannelContextStruct *encoderChannel
 /*           on 80 bits (10 8bits words)                                     */
 /*                                                                           */
 /*****************************************************************************/
-void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[])
+void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[], uint8_t *bitStreamLength)
 {
 	int i;
 	uint16_t parameters[NB_PARAMETERS]; /* the output parameters in an array */
 
 	/* internal buffers which we do not need to keep between calls */
 	word16_t LPCoefficients[NB_LSP_COEFF]; /* the LP coefficients in Q3.12 */
+	word16_t LSFCoefficients[NB_LSP_COEFF]; /* the LSF coefficients in Q3.12 */
 	word16_t qLPCoefficients[2*NB_LSP_COEFF]; /* the quantized LP coefficients in Q3.12 computed from the qLSP one after interpolation: two sets, one for each subframe */
 	word16_t weightedqLPCoefficients[2*NB_LSP_COEFF]; /* the qLP coefficients in Q3.12 weighted according to spec A3.3.3 */
 	word16_t LSPCoefficients[NB_LSP_COEFF]; /* the LSP coefficients in Q15 */
@@ -116,16 +136,100 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 	int parametersIndex = 4; /* index to insert parameters in the parameters output array */
 	word16_t impulseResponseInput[L_SUBFRAME]; /* input buffer for the impulse response computation: in Q12, 1 followed by all zeros see spec A3.5*/
 
+	/* used for VAD */
+	word32_t reflectionCoefficient = 0; /* in Q31, computed during LP generation */
+	word32_t autoCorrelationCoefficients[NB_LSP_COEFF+3]; /* if VAD is enabled we must compute 13 coefficients, 11 otherwise but used only internally by computeLP function in that case */
+	word32_t noLagAutoCorrelationCoefficients[NB_LSP_COEFF+3]; /* DTX must have access to autocorrelation Coefficients on which lag windowing as not been applied */
+	int8_t autoCorrelationCoefficientsScale; /* autocorrelation coefficients are normalised by computeLP, must get their scaling factor */
+
 	/*****************************************************************************************/
 	/*** on frame basis : preProcessing, LP Analysis, Open-loop pitch search               ***/
 	preProcessing(encoderChannelContext, inputFrame, encoderChannelContext->signalLastInputFrame); /* output of the function in the signal buffer */
 
-	computeLP(encoderChannelContext->signalBuffer, LPCoefficients); /* use the whole signal Buffer for windowing and autocorrelation */
+	/* use the whole signal Buffer for windowing and autocorrelation */
+	/* autoCorrelation Coefficients are computed and used internally, in case of VAD we must compute and retrieve 13 coefficients, compute only 11 when VAD is disabled */
+	computeLP(encoderChannelContext->signalBuffer, LPCoefficients, &reflectionCoefficient, autoCorrelationCoefficients, noLagAutoCorrelationCoefficients, &autoCorrelationCoefficientsScale, (encoderChannelContext->VADChannelContext != NULL)?NB_LSP_COEFF+3:NB_LSP_COEFF+1);
 	/*** compute LSP: it might fail, get the previous one in this case ***/
 	if (!LP2LSPConversion(LPCoefficients, LSPCoefficients)) {
 		/* unable to find the 10 roots repeat previous LSP */
 		memcpy(LSPCoefficients, encoderChannelContext->previousLSPCoefficients, NB_LSP_COEFF*sizeof(word16_t));
 	}
+
+	/*********** VAD *****************/
+	if (encoderChannelContext->VADChannelContext != NULL) { /* if VAD is not enable, no context */
+		uint8_t VADflag = 1;
+		/* update DTX context */
+		updateDTXContext(encoderChannelContext->DTXChannelContext, noLagAutoCorrelationCoefficients, autoCorrelationCoefficientsScale);
+
+		/*** compute LSF in Q2.13 : lsf = arcos(lsp) range [0, Pi[ spec 3.2.4 eq18 ***/
+		/* TODO : remove it from LSPQuantizationFunction and perform it out of enableVAD test */
+		for (i=0; i<NB_LSP_COEFF; i++)  {
+			LSFCoefficients[i] = g729Acos_Q15Q13(LSPCoefficients[i]);
+		}
+
+		VADflag = bcg729_vad(encoderChannelContext->VADChannelContext, reflectionCoefficient, LSFCoefficients, autoCorrelationCoefficients, autoCorrelationCoefficientsScale, encoderChannelContext->signalCurrentFrame);
+
+		/* call encodeSIDFrame even if it is a voice frame as it will update DTXContext with current VADflag */
+		encodeSIDFrame(encoderChannelContext->DTXChannelContext,  encoderChannelContext->previousLSPCoefficients, encoderChannelContext->previousqLSPCoefficients, VADflag, encoderChannelContext->previousqLSF, &(encoderChannelContext->excitationVector[L_PAST_EXCITATION]), qLPCoefficients, bitStream, bitStreamLength);
+
+		if (VADflag == 0 ) { /* NOISE frame has been encoded */
+			word16_t residualSignal[L_FRAME];
+			/* update encoder context : generate weighted signal */
+			/*** Compute the weighted Quantized LP Coefficients according to spec A3.3.3 ***/
+			/*  weightedqLPCoefficients[0] = qLPCoefficients[0]*Gamma^(i+1) (i=0..9) with Gamma = 0.75 in Q15 */
+			weightedqLPCoefficients[0] = MULT16_16_P15(qLPCoefficients[0], GAMMA_E1);
+			weightedqLPCoefficients[1] = MULT16_16_P15(qLPCoefficients[1], GAMMA_E2);
+			weightedqLPCoefficients[2] = MULT16_16_P15(qLPCoefficients[2], GAMMA_E3);
+			weightedqLPCoefficients[3] = MULT16_16_P15(qLPCoefficients[3], GAMMA_E4);
+			weightedqLPCoefficients[4] = MULT16_16_P15(qLPCoefficients[4], GAMMA_E5);
+			weightedqLPCoefficients[5] = MULT16_16_P15(qLPCoefficients[5], GAMMA_E6);
+			weightedqLPCoefficients[6] = MULT16_16_P15(qLPCoefficients[6], GAMMA_E7);
+			weightedqLPCoefficients[7] = MULT16_16_P15(qLPCoefficients[7], GAMMA_E8);
+			weightedqLPCoefficients[8] = MULT16_16_P15(qLPCoefficients[8], GAMMA_E9);
+			weightedqLPCoefficients[9] = MULT16_16_P15(qLPCoefficients[9], GAMMA_E10);
+			weightedqLPCoefficients[10] = MULT16_16_P15(qLPCoefficients[10], GAMMA_E1);
+			weightedqLPCoefficients[11] = MULT16_16_P15(qLPCoefficients[11], GAMMA_E2);
+			weightedqLPCoefficients[12] = MULT16_16_P15(qLPCoefficients[12], GAMMA_E3);
+			weightedqLPCoefficients[13] = MULT16_16_P15(qLPCoefficients[13], GAMMA_E4);
+			weightedqLPCoefficients[14] = MULT16_16_P15(qLPCoefficients[14], GAMMA_E5);
+			weightedqLPCoefficients[15] = MULT16_16_P15(qLPCoefficients[15], GAMMA_E6);
+			weightedqLPCoefficients[16] = MULT16_16_P15(qLPCoefficients[16], GAMMA_E7);
+			weightedqLPCoefficients[17] = MULT16_16_P15(qLPCoefficients[17], GAMMA_E8);
+			weightedqLPCoefficients[18] = MULT16_16_P15(qLPCoefficients[18], GAMMA_E9);
+			weightedqLPCoefficients[19] = MULT16_16_P15(qLPCoefficients[19], GAMMA_E10);
+
+			/*** Compute weighted signal according to spec A3.3.3, this function also compute LPResidualSignal(entire frame values) as specified in eq A.3 ***/
+			computeWeightedSpeech(encoderChannelContext->signalCurrentFrame, qLPCoefficients, weightedqLPCoefficients, &(encoderChannelContext->weightedInputSignal[MAXIMUM_INT_PITCH_DELAY]), residualSignal); /* weightedInputSignal contains MAXIMUM_INT_PITCH_DELAY values from previous frame, points to current frame */
+
+			/* update the target Signal : targetSignal = residualSignal - excitationVector */
+			for (subframeIndex=0; subframeIndex<L_FRAME; subframeIndex+=L_SUBFRAME) {
+				for (i=0; i<L_SUBFRAME; i++) {
+					encoderChannelContext->targetSignal[NB_LSP_COEFF+i] = SUB16(residualSignal[subframeIndex+i], encoderChannelContext->excitationVector[L_PAST_EXCITATION+subframeIndex+i]);
+				}
+				synthesisFilter(&(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(weightedqLPCoefficients[LPCoefficientsIndex]), &(encoderChannelContext->targetSignal[NB_LSP_COEFF]));
+				LPCoefficientsIndex+= NB_LSP_COEFF;
+			}
+
+			/***  memory updates                                                        ***/
+			/* shift left by L_FRAME the signal buffer */
+			memmove(encoderChannelContext->signalBuffer, &(encoderChannelContext->signalBuffer[L_FRAME]), (L_LP_ANALYSIS_WINDOW-L_FRAME)*sizeof(word16_t));
+			/* shift left by L_FRAME the weightedInputSignal buffer */
+			memmove(encoderChannelContext->weightedInputSignal, &(encoderChannelContext->weightedInputSignal[L_FRAME]), MAXIMUM_INT_PITCH_DELAY*sizeof(word16_t));
+			/* shift left by L_FRAME the excitationVector */
+			memmove(encoderChannelContext->excitationVector, &(encoderChannelContext->excitationVector[L_FRAME]), L_PAST_EXCITATION*sizeof(word16_t));
+
+			return;
+		}
+	}
+
+	/* set generated bitStream length: active voice is compressed into 80 bits */
+	*bitStreamLength = 10;
+
+	/*********** VAD *****************/
+
+
+
+
 
 	/*** LSPQuantization and compute L0, L1, L2, L3: the first four parameters ***/
 	LSPQuantization(encoderChannelContext, LSPCoefficients, qLSPCoefficients, parameters);

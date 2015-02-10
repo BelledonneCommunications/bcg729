@@ -53,6 +53,23 @@ void insertionSort(word16_t x[], int length)
 }
 
 /*****************************************************************************/
+/* getMinInArray : get the minimum value from an array                       */
+/*    parameters :                                                           */
+/*      -(i) x: the array to be searched                                     */
+/*      -(i) length: the array length                                        */
+/*    returns : the minimum value found in the array                         */
+/*                                                                           */
+/*****************************************************************************/
+word16_t getMinInArray(word16_t x[], int length) {
+	word16_t min = MAXINT16;
+	int i;
+	for (i=0; i<length; i++) {
+		if (x[i]<min) min = x[i];
+	}
+	return min;
+}
+
+/*****************************************************************************/
 /* computeParity : compute parity for pitch delay adaptative codebook index  */
 /*      XOR of the 6 MSB (pitchDelay on 8 bits)                              */
 /*    parameters :                                                           */
@@ -299,6 +316,29 @@ void parametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[])
 }
 
 /*****************************************************************************/
+/* CNGparametersArray2BitStream : convert array of parameters to bitStream   */
+/*      according to spec B4.3 - Table B2 and following mapping of values    */
+/*               0 -> L0 (1 bit)                                             */
+/*               1 -> L1 (5 bits)                                            */
+/*               2 -> L2 (4 bits)                                            */
+/*               3 -> Gain (5 bits)                                          */
+/*    parameters:                                                            */
+/*      -(i) parameters : 4 values parameters array                          */
+/*      -(o) bitStream : the 4 values streamed on 15 bits in a               */
+/*           2*8bits values array                                            */
+/*                                                                           */
+/*****************************************************************************/
+
+void CNGparametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[]) {
+	bitStream[0] = ((parameters[0]&((uint16_t) 0x1))<<7) |
+			((parameters[1]&((uint16_t) 0x1f))<<2) |
+			((parameters[2]>>2)&((uint16_t) 0x3)); 
+	
+	bitStream[1] = ((parameters[2]&((uint16_t) 0x03))<<6) |
+			((parameters[3]&((uint16_t) 0x1f))<<1);
+}
+
+/*****************************************************************************/
 /* parametersArray2BitStream : convert bitStream to an array of parameters   */
 /*             reverse operation of previous funtion                         */
 /*    parameters:                                                            */
@@ -326,4 +366,20 @@ void parametersBitStream2Array(uint8_t bitStream[], uint16_t parameters[])
 	parameters[14]= bitStream[9]&(uint16_t)0xf;
 
 	return;
+}
+
+/*****************************************************************************/
+/* pseudoRandom : generate pseudo random number as in spec 4.4.4 eq96        */
+/*    parameters:                                                            */
+/*      -(i/o) randomGeneratorSeed(updated by this function)                 */
+/*    return value :                                                         */
+/*      - a unsigned 16 bits pseudo random number                            */
+/*                                                                           */
+/*****************************************************************************/
+uint16_t pseudoRandom(uint16_t *randomGeneratorSeed)
+{
+	/* pseudoRandomSeed is stored in an uint16_t var, we shall not worry about overflow here */
+	/* pseudoRandomSeed*31821 + 13849; */
+	*randomGeneratorSeed = MAC16_16(13849, (*randomGeneratorSeed), 31821);
+	return *randomGeneratorSeed;
 }

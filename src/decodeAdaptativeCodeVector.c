@@ -33,6 +33,53 @@ void initDecodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderCh
 }
 
 
+/*****************************************************************************/
+/* computeAdaptativeCodeVector : as in spec 4.1.3                            */
+/*    parameters:                                                            */
+/*      -(i/o) excitationVector : in Q0 excitation accessed from             */
+/*             [-MAXIMUM_INT_PITCH_DELAY(143), -1] as input                  */
+/*             and [0, L_SUBFRAME[ as output to store the adaptative         */
+/*             codebook vector                                               */
+/*      -(i/o) fracPitchDelay : the fractionnal part of Pitch Delay.         */
+/*      -(i/o) intPitchDelay : the integer part of Pitch Delay.              */
+/*                                                                           */
+/*****************************************************************************/
+void computeAdaptativeCodebookVector(word16_t *excitationVector, int16_t fracPitchDelay, int16_t intPitchDelay) {
+	word16_t *excitationVectorMinusK; /* pointer to u(-k) */
+	int n;
+	/* compute the adaptative codebook vector using the pitch delay and the past excitation vector */
+	/* from spec 4.1.3 and 3.7.1 */
+	/* shall compute v(n ) = ∑ u (n - k + i )b30 (t + 3i ) + ∑ u (n - k + 1 + i )b30 (3 - t + 3i ) for i=0,...,9 and n = 0,...,39 (t in 0, 1, 2) */
+	/* with k = intPitchDelay and t = fracPitchDelay wich must be converted from range -1,0,1 to 0,1,2 */
+	/* u the past excitation vector */
+	/* v the adaptative codebook vector */
+	/* b30 an interpolation filter */
+
+	/* scale fracPichDelay from -1,0.1 to 0,1,2 */
+	if (fracPitchDelay==1) {
+		excitationVectorMinusK = &(excitationVector[-(intPitchDelay+1)]); /* fracPitchDelay being positive -> increase by one the integer part and set to 2 the fractional part : -(k+1/3) -> -(k+1)+2/3 */
+		fracPitchDelay = 2;
+	} else {
+		fracPitchDelay = -fracPitchDelay; /* 0 unchanged, -1 -> +1 */
+		excitationVectorMinusK = &(excitationVector[-intPitchDelay]); /* -(k-1/3) -> -k+1/3  or -(k) -> -k*/
+	}
+
+	for (n=0; n<L_SUBFRAME; n++) { /* loop over the whole subframe */
+		word16_t *excitationVectorNMinusK = &(excitationVectorMinusK[n]); /* point to u(n-k), unscaled value, full range */
+		word16_t *excitationVectorNMinusKPlusOne = &(excitationVectorMinusK[n+1]); /* point to u(n-k+1), unscaled value, full range */
+
+		word16_t *b301 = &(b30[fracPitchDelay]); /* point to b30(t) in Q0.15 : sums of all b30 coeffs is < 2, no overflow possible on 32 bits */
+		word16_t *b302 = &(b30[3-fracPitchDelay]); /* point to b30(3-t) in Q0.15*/
+		int i,j; /* j will store 3i */
+		word32_t acc = 0; /* in Q15 */
+		for (i=0, j=0; i<10; i++, j+=3) {
+			acc = MAC16_16(acc, excitationVectorNMinusK[-i], b301[j]); /*  Note : the spec says: u(n−k+i)b30(t+3i) but the ITU code do (and here too) u(n-k-i )b30(t+3i) */
+			acc = MAC16_16(acc, excitationVectorNMinusKPlusOne[i], b302[j]); /* u(n-k+1+i)b30(3-t+3i) */
+		}
+		excitationVector[n] = SATURATE(PSHR(acc, 15), MAXINT16); /* acc in Q15, shift/round to unscaled value and check overflow on 16 bits */
+	}
+
+}
 
 /*****************************************************************************/
 /* decodeAdaptativeCodeVector : as in spec 4.1.3                             */
@@ -55,8 +102,6 @@ void decodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderChanne
 				int16_t *intPitchDelay, word16_t *excitationVector)
 {
 	int16_t fracPitchDelay;
-	word16_t *excitationVectorMinusK; /* pointer to u(-k) */
-	int n;
 
 	/*** Compute the Pitch Delay from the Codebook index ***/
 	/* fracPitchDelay is computed in the range -1,0,1 */
@@ -108,38 +153,9 @@ void decodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderChanne
 		}
 	}
 
+	/* compute the adaptative codebook vector using the pitch delay we just get and the past excitation vector */
+	computeAdaptativeCodebookVector(excitationVector, fracPitchDelay, *intPitchDelay); 
 
-	/* now compute the adaptative codebook vector using the pitch delay we just get and the past excitation vector */
-	/* from spec 4.1.3 and 3.7.1 */
-	/* shall compute v(n ) = ∑ u (n - k + i )b30 (t + 3i ) + ∑ u (n - k + 1 + i )b30 (3 - t + 3i ) for i=0,...,9 and n = 0,...,39 (t in 0, 1, 2) */
-	/* with k = intPitchDelay and t = fracPitchDelay wich must be converted from range -1,0,1 to 0,1,2 */
-	/* u the past excitation vector */
-	/* v the adaptative codebook vector */
-	/* b30 an interpolation filter */
-
-	/* scale fracPichDelay from -1,0.1 to 0,1,2 */
-	if (fracPitchDelay==1) {
-		excitationVectorMinusK = &(excitationVector[-(*intPitchDelay+1)]); /* fracPitchDelay being positive -> increase by one the integer part and set to 2 the fractional part : -(k+1/3) -> -(k+1)+2/3 */
-		fracPitchDelay = 2;
-	} else {
-		fracPitchDelay = -fracPitchDelay; /* 0 unchanged, -1 -> +1 */
-		excitationVectorMinusK = &(excitationVector[-(*intPitchDelay)]); /* -(k-1/3) -> -k+1/3  or -(k) -> -k*/
-	}
-
-	for (n=0; n<L_SUBFRAME; n++) { /* loop over the whole subframe */
-		word16_t *excitationVectorNMinusK = &(excitationVectorMinusK[n]); /* point to u(n-k), unscaled value, full range */
-		word16_t *excitationVectorNMinusKPlusOne = &(excitationVectorMinusK[n+1]); /* point to u(n-k+1), unscaled value, full range */
-
-		word16_t *b301 = &(b30[fracPitchDelay]); /* point to b30(t) in Q0.15 : sums of all b30 coeffs is < 2, no overflow possible on 32 bits */
-		word16_t *b302 = &(b30[3-fracPitchDelay]); /* point to b30(3-t) in Q0.15*/
-		int i,j; /* j will store 3i */
-		word32_t acc = 0; /* in Q15 */
-		for (i=0, j=0; i<10; i++, j+=3) {
-			acc = MAC16_16(acc, excitationVectorNMinusK[-i], b301[j]); /*  Note : the spec says: u(n−k+i)b30(t+3i) but the ITU code do (and here too) u(n-k-i )b30(t+3i) */
-			acc = MAC16_16(acc, excitationVectorNMinusKPlusOne[i], b302[j]); /* u(n-k+1+i)b30(3-t+3i) */
-		}
-		excitationVector[n] = SATURATE(PSHR(acc, 15), MAXINT16); /* acc in Q15, shift/round to unscaled value and check overflow on 16 bits */
-	}
 	return;
 }
-	
+

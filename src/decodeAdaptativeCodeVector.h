@@ -24,6 +24,19 @@
 void initDecodeAdaptativeCodeVector(bcg729DecoderChannelContextStruct *decoderChannelContext);
 
 /*****************************************************************************/
+/* computeAdaptativeCodeVector : as in spec 4.1.3                            */
+/*    parameters:                                                            */
+/*      -(i/o) excitationVector : in Q0 excitation accessed from             */
+/*             [-MAXIMUM_INT_PITCH_DELAY(143), -1] as input                  */
+/*             and [0, L_SUBFRAME[ as output to store the adaptative         */
+/*             codebook vector                                               */
+/*      -(i/o) fracPitchDelay : the fractionnal part of Pitch Delay.         */
+/*      -(i/o) intPitchDelay : the integer part of Pitch Delay.              */
+/*                                                                           */
+/*****************************************************************************/
+void computeAdaptativeCodebookVector(word16_t *excitationVector, int16_t fracPitchDelay, int16_t intPitchDelay);
+
+/*****************************************************************************/
 /* decodeAdaptativeCodeVector : as in spec 4.1.3                             */
 /*    parameters:                                                            */
 /*      -(i/o) decoderChannelContext : the channel context data              */

@@ -26,7 +26,10 @@ libbcg729_la_SOURCES=	LP2LSPConversion.c \
 			postProcessing.c \
 			preProcessing.c \
 			qLSP2LP.c \
-			utils.c
+			utils.c \
+			cng.c \
+			vad.c \
+			dtx.c
 
 libbcg729_la_LDFLAGS= -no-undefined
 

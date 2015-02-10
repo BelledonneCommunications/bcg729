@@ -44,6 +44,9 @@ set(BCG729_SOURCE_FILES
 	preProcessing.c
 	qLSP2LP.c
 	utils.c
+	cng.c
+	dtx.c
+	vad.c
 )
 
 add_library(bcg729 SHARED ${BCG729_SOURCE_FILES})

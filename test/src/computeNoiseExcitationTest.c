@@ -1,5 +1,5 @@
 /*
- computeLPTest.c
+ computeNoiseExcitationTest.c
 
  Copyright (C) 2011 Belledonne Communications, Grenoble, France
  Author : Johan Pascal
@@ -21,8 +21,12 @@
 /*****************************************************************************/
 /*                                                                           */
 /* Test Program for computeLP Bloc                                           */
-/*    Input: a CSV text with 240 values of 16 bits PCM on each row           */
-/*    Ouput: 10 LP values in Q12                                             */
+/*    Input: a CSV text with 236 values of 16 bits :                         */
+/*           - target gain in Q3                                             */
+/*           - pseudo random generator seed                                  */
+/*           - 234 values of excitation vector buffer(154 past, 80 current)  */
+/*    Ouput: - updated pseudo random generator seed                          */
+/*           - 234 16 bits values of updated excitation vector               */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -33,11 +37,10 @@
 
 #include "typedef.h"
 #include "codecParameters.h"
-#include "basicOperationsMacros.h"
 
 #include "testUtils.h"
 
-#include "computeLP.h"
+#include "cng.h"
 
 int main(int argc, char *argv[] )
 {
@@ -50,8 +53,9 @@ int main(int argc, char *argv[] )
 	FILE *fpOutput;
 
 	/*** input and output buffers ***/
-	word16_t inputBuffer[L_LP_ANALYSIS_WINDOW]; 
-	word16_t LPCoefficients[NB_LSP_COEFF];
+	word16_t inputBuffer[L_PAST_EXCITATION+L_FRAME]; /* used for input and output, in Q0 */
+	word16_t targetGain; /* input in Q3 */
+	uint16_t randomGeneratorSeed;
 
 	/*** inits ***/
 	/* open the input file */
@@ -77,25 +81,21 @@ int main(int argc, char *argv[] )
 	while(1) /* infinite loop, escape condition is in the reading of data */
 	{
 		int i;
-		/* by-products of computeLP used for VAD/DTX, not tested here */
-		word32_t reflectionCoefficient;
-		word32_t autoCorrelationCoefficients[11];
-		word32_t noLagAutoCorrelationCoefficients[11];
-		int8_t autoCorrelationCoefficientsScale;
-
 		/* read the input data until we have some */
-		if (fscanf(fpInput,"%hd",&(inputBuffer[0])) != 1) break;
-		for (i=1; i<L_LP_ANALYSIS_WINDOW; i++) {
+		if (fscanf(fpInput,"%hd",&targetGain) != 1) break;
+		if (fscanf(fpInput,",%hd",&randomGeneratorSeed) != 1) break;
+		for (i=0; i<L_PAST_EXCITATION+L_FRAME; i++) {
 			if (fscanf(fpInput,",%hd",&(inputBuffer[i])) != 1) break;
 		}
 
-		/* call the preProcessing function: output will replace the input in the buffer */
-		computeLP(inputBuffer, LPCoefficients, &reflectionCoefficient,  autoCorrelationCoefficients, noLagAutoCorrelationCoefficients, &autoCorrelationCoefficientsScale, 11);
+		/* call the tested function: output will replace the input in the buffer */
+		computeComfortNoiseExcitationVector(targetGain, &randomGeneratorSeed, &(inputBuffer[L_PAST_EXCITATION]));
 
 		/* write the output to the output file */
-		fprintf(fpOutput,"%d", LPCoefficients[0]);
-		for (i=1; i<NB_LSP_COEFF; i++) {
-			fprintf(fpOutput,",%d", LPCoefficients[i]);
+		//fprintf(fpOutput,"%d", (int16_t)randomGeneratorSeed);
+		fprintf(fpOutput,"%d", (int16_t)inputBuffer[L_PAST_EXCITATION]);
+		for (i=L_PAST_EXCITATION+1; i<L_PAST_EXCITATION+L_FRAME; i++) {
+			fprintf(fpOutput,",%d", inputBuffer[i]);
 		}
 		fprintf(fpOutput,"\n");
 

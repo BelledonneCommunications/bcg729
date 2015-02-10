@@ -38,6 +38,16 @@
 void insertionSort(word16_t x[], int length);
 
 /*****************************************************************************/
+/* getMinInArray : get the minimum value from an array                       */
+/*    parameters :                                                           */
+/*      -(i) x: the array to be searched                                     */
+/*      -(i) length: the array length                                        */
+/*    returns : the minimum value found in the array                         */
+/*                                                                           */
+/*****************************************************************************/
+word16_t getMinInArray(word16_t x[], int length);
+
+/*****************************************************************************/
 /* computeParity : compute parity for pitch delay adaptative codebook index  */
 /*      XOR of the 6 MSB (pitchDelay on 8 bits)                              */
 /*    parameters :                                                           */
@@ -179,6 +189,21 @@ void computeGainPredictionError(word16_t fixedCodebookGainCorrectionFactor, word
 void parametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[]);
 
 /*****************************************************************************/
+/* CNGparametersArray2BitStream : convert array of parameters to bitStream   */
+/*      according to spec B4.3 - Table B2 and following mapping of values    */
+/*               0 -> L0 (1 bit)                                             */
+/*               1 -> L1 (5 bits)                                            */
+/*               2 -> L2 (4 bits)                                            */
+/*               3 -> Gain (5 bits)                                          */
+/*    parameters:                                                            */
+/*      -(i) parameters : 4 values parameters array                          */
+/*      -(o) bitStream : the 4 values streamed on 15 bits in a               */
+/*           2*8bits values array                                            */
+/*                                                                           */
+/*****************************************************************************/
+void CNGparametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[]);
+
+/*****************************************************************************/
 /* parametersArray2BitStream : convert bitStream to an array of parameters   */
 /*             reverse operation of previous funtion                         */
 /*    parameters:                                                            */
@@ -188,4 +213,14 @@ void parametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[]);
 /*                                                                           */
 /*****************************************************************************/
 void parametersBitStream2Array(uint8_t bitStream[], uint16_t parameters[]);
+
+/*****************************************************************************/
+/* pseudoRandom : generate pseudo random number as in spec 4.4.4 eq96        */
+/*    parameters:                                                            */
+/*      -(i/o) randomGeneratorSeed(updated by this function)                 */
+/*    return value :                                                         */
+/*      - a unsigned 16 bits pseudo random number                            */
+/*                                                                           */
+/*****************************************************************************/
+uint16_t pseudoRandom(uint16_t *randomGeneratorSeed);
 #endif /* ifndef UTILS_H */
