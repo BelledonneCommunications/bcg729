@@ -205,9 +205,15 @@ static uint8_t compareLPCFilters(word32_t *LPCoefficientsAutocorrelation, word32
 /*                                                                           */
 /*****************************************************************************/
 bcg729DTXChannelContextStruct *initBcg729DTXChannel() {
+	int i;
 	/* create the context structure */
 	bcg729DTXChannelContextStruct *DTXChannelContext = malloc(sizeof(bcg729DTXChannelContextStruct));
 	memset(DTXChannelContext, 0, sizeof(*DTXChannelContext)); /* set autocorrelation buffers to 0 */
+	/* avoid arithmetics problem: set past autocorrelation[0] to 1 */
+	for (i=0; i<7; i++) {
+		DTXChannelContext->autocorrelationCoefficients[i][0] = ONE_IN_Q30;
+		DTXChannelContext->autocorrelationCoefficientsScale[i] = 30;
+	}
 
 	DTXChannelContext->previousVADflag = 1; /* previous VAD flag must be initialised to VOICE */
 	DTXChannelContext->pseudoRandomSeed = CNG_DTX_RANDOM_SEED_INIT;
