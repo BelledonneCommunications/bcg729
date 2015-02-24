@@ -3,7 +3,7 @@
 
 
 
-AC_INIT([bcg729],[0.1])
+AC_INIT([bcg729],[1.0])
 AC_CANONICAL_SYSTEM
 AC_PREREQ(2.63)
 AC_CONFIG_SRCDIR([src/encoder.c])
@@ -19,11 +19,12 @@ AC_ARG_ENABLE(strict,
 	[wall_werror=$enableval],
 	[wall_werror=yes]
 )
-# configure option to disable the tests
+dnl configure option to disable the tests
 AC_ARG_ENABLE([tests],
 	AS_HELP_STRING([--disable-tests], [Disable the tests]))
 	AM_CONDITIONAL([RUN_TESTS], [test "x$enable_tests" != "xno"])
-# configure option to disable mediastreamer plugin
+
+dnl configure option to disable mediastreamer plugin
 AC_ARG_ENABLE([msplugin],
 	AS_HELP_STRING([--disable-msplugin], [Disable the mediastreamer plugin]),
 	enable_msplugin="$enableval",
@@ -36,7 +37,7 @@ if test $GCC = yes && test $wall_werror = yes;  then
 	CFLAGS="$CFLAGS -Werror "
 fi
 
-# check for libraries that have pkg-config files installed
+dnl check for libraries that have pkg-config files installed
 PKG_CHECK_MODULES(ORTP, ortp >= 0.21.0,[found_ortp=true],foo=bar)
 PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.8.99,[found_ms2=true],foo=bar)
 AM_CONDITIONAL(BUILD_MSBCG729, test x${found_ms2}x${found_ortp}x${enable_msplugin} = xtruextruexyes)
@@ -53,7 +54,7 @@ case "$target_os" in
 esac
 AC_SUBST(VISIBILITY_CFLAGS)
 
-# Initialize libtool
+dnl Initialize libtool
 LT_INIT([win32-dll shared ])
 
 AC_CONFIG_COMMANDS([libtool-hacking],
@@ -66,7 +67,7 @@ AC_CONFIG_COMMANDS([libtool-hacking],
 	[mingw_found=$mingw_found]
 )
 
-# Create the following files from their .in counterparts
+dnl Create the following files from their .in counterparts
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile 

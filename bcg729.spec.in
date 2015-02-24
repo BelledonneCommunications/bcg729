@@ -4,7 +4,7 @@
 
 Summary:	Bcg729 codec plugin for mediastreamer2
 Name:	bcg729
-Version:	0.1
+Version:	1.0
 Release:	1
 License:	GPL
 Group:	Applications/Communications
