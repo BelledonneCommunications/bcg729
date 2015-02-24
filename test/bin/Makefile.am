@@ -1,6 +1,6 @@
 check_PROGRAMS=adaptativeCodebookSearchTest computeAdaptativeCodebookGainTest computeLPTest computeWeightedSpeechTest decodeAdaptativeCodeVectorTest decodeFixedCodeVectorTest decodeGainsTest decodeLSPTest \
        decoderTest encoderTest decoderMultiChannelTest encoderMultiChannelTest findOpenLoopPitchDelayTest fixedCodebookSearchTest g729FixedPointMathTest gainQuantizationTest interpolateqLSPAndConvert2LPTest \
-       LP2LSPConversionTest LPSynthesisFilterTest LSPQuantizationTest postFilterTest postProcessingTest preProcessingTest computeNoiseExcitationTest CNGdecoderTest encoderVADTest
+       LP2LSPConversionTest LPSynthesisFilterTest LSPQuantizationTest postFilterTest postProcessingTest preProcessingTest computeNoiseExcitationTest CNGdecoderTest CNGRFC3389decoderTest encoderVADTest
 util_src=$(top_srcdir)/test/src/testUtils.c
 
 adaptativeCodebookSearchTest_SOURCES=$(top_srcdir)/test/src/adaptativeCodebookSearchTest.c $(util_src)
@@ -12,6 +12,7 @@ decodeFixedCodeVectorTest_SOURCES=$(top_srcdir)/test/src/decodeFixedCodeVectorTe
 decodeGainsTest_SOURCES=$(top_srcdir)/test/src/decodeGainsTest.c $(util_src)
 decodeLSPTest_SOURCES=$(top_srcdir)/test/src/decodeLSPTest.c $(util_src)
 decoderTest_SOURCES=$(top_srcdir)/test/src/decoderTest.c $(util_src)
+CNGRFC3389decoderTest_SOURCES=$(top_srcdir)/test/src/CNGRFC3389decoderTest.c $(util_src)
 CNGdecoderTest_SOURCES=$(top_srcdir)/test/src/CNGdecoderTest.c $(util_src)
 decoderMultiChannelTest_SOURCES=$(top_srcdir)/test/src/decoderMultiChannelTest.c $(util_src)
 encoderTest_SOURCES=$(top_srcdir)/test/src/encoderTest.c $(util_src)

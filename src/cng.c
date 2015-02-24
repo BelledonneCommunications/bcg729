@@ -34,6 +34,7 @@
 #include "qLSP2LP.h"
 #include "g729FixedPointMath.h"
 #include "codebooks.h"
+#include "LP2LSPConversion.h"
 
 /* buffers allocation */
 static const word16_t SIDqLSPInitialValues[NB_LSP_COEFF] = {31441,  27566,  21458,  13612,   4663, -4663, -13612, -21458, -27566, -31441}; /* in Q0.15 the initials values for the previous qLSP buffer */
@@ -231,6 +232,7 @@ void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGe
 /*      -(i): previousFrameIsActiveFlag: true if last decoded frame was an active one      */
 /*      -(i): bitStream: for SID frame contains received params as in spec B4.3,           */
 /*                       NULL for missing/untransmitted frame                              */
+/*      -(i): bitStreamLength : in bytes, length of previous buffer                        */
 /*      -(i/o): excitationVector in Q0, accessed in range [-L_PAST_EXCITATION,L_FRAME-1]   */
 /*                                                        [-154,79]                        */
 /*      -(o): LP: 20 LP coefficients in Q12                                                */
@@ -240,30 +242,99 @@ void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGe
 /*              used to compute the current qLSF                                           */
 /*                                                                                         */
 /*******************************************************************************************/
-void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t previousFrameIsActiveFlag, uint8_t *bitStream, word16_t *excitationVector, word16_t *previousqLSP, word16_t *LP, uint16_t *pseudoRandomSeed, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF]) {
+void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t previousFrameIsActiveFlag, uint8_t *bitStream, uint8_t bitStreamLength, word16_t *excitationVector, word16_t *previousqLSP, word16_t *LP, uint16_t *pseudoRandomSeed, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t rfc3389PayloadFlag) {
 	int i;
 	word16_t interpolatedqLSP[NB_LSP_COEFF]; /* interpolated qLSP in Q0.15 */
 	/* if this is a SID frame, decode received parameters */
 	if (bitStream!=NULL) {
-		word16_t currentqLSF[NB_LSP_COEFF]; /* buffer to the current qLSF in Q2.13 */
-		uint8_t L0 = (bitStream[0]>>7)&0x01;
-		uint8_t L1Index = (bitStream[0]>>2)&0x1F;
-		uint8_t L2Index = ((bitStream[0]&0x03)<<2) | ((bitStream[1]>>6)&0x03);
+		if (rfc3389PayloadFlag) {
+			int j;
+			word32_t LPCoefficients[NB_LSP_COEFF+1]; /* in Q4.27 */
+			word16_t LPCoefficientsQ12[NB_LSP_COEFF]; /* in Q12 */
+			word32_t previousIterationLPCoefficients[NB_LSP_COEFF+1]; /* in Q4.27 */
+			uint8_t CNFilterOrder = (bitStreamLength-1); /* first byte is noise energy level */
+			word16_t k[NB_LSP_COEFF];
+			word32_t receivedSIDGainLog;
 
-		/* retrieve gain from codebook according to Gain parameter */
-		CNGChannelContext->receivedSIDGain = SIDGainCodebook[((bitStream[1])>>1)&0x1F];
-		/* Use L1 and L2(parameter for first and second stage vector of LSF quantizer) to retrieve LSP using subset index to address the complete L1 and L2L3 codebook */
-		for (i=0; i<NB_LSP_COEFF/2; i++) {
-			currentqLSF[i]=ADD16(L1[L1SubsetIndex[L1Index]][i], L2L3[L2SubsetIndex[L2Index]][i]);
-		}
-		for (i=NB_LSP_COEFF/2; i<NB_LSP_COEFF; i++) {
-			currentqLSF[i]=ADD16(L1[L1SubsetIndex[L1Index]][i], L2L3[L3SubsetIndex[L2Index]][i]);
-		}
-		computeqLSF(currentqLSF, previousLCodeWord, L0, noiseMAPredictor, noiseMAPredictorSum);
+			if (CNFilterOrder>NB_LSP_COEFF) { /* if rfc3389 payload have a filter order > than supported, just ignore the last coefficients */
+				CNFilterOrder = NB_LSP_COEFF;
+			}
+			/* retrieve gain from codebook according to Gain parameter */
+			//CNGChannelContext->receivedSIDGain = SIDGainCodebook[bitStream[0]];
+			/* received parameter is -(10*log10(meanE) -90) so retrieve mean energy : 10^((param+90)/10) */
+			/* but expected parameter is a gain applied to single sample so sqrt of previous result */
+			receivedSIDGainLog = ADD32(-bitStream[0], 90);
+			if (receivedSIDGainLog > 66) {
+				receivedSIDGainLog = 66; /* noise level shall not be too high in any case */
+			} /* receivedSIDGainLog is param+90 in Q0 */
+			receivedSIDGainLog = MULT16_16(receivedSIDGainLog, 680); /* 680 is 1/(10*log10(2)) in Q11 -> receivedSIDGainLog is ((param+90)/10)/log10(2) = log2(meanE) in Q11 */
+			receivedSIDGainLog = g729Exp2_Q11Q16(receivedSIDGainLog); /* receivedSIDGainLog in meanE in Q16 */
+			if (receivedSIDGainLog > 0 ) { /* avoid arithmetic problem if energy is too low */
+				CNGChannelContext->receivedSIDGain = (word16_t)(SHR(g729Sqrt_Q0Q7(receivedSIDGainLog), 12)); /* output of sqrt in Q15, result needed in Q3  */
+				if (CNGChannelContext->receivedSIDGain < SIDGainCodebook[0]) {
+					CNGChannelContext->receivedSIDGain = SIDGainCodebook[0];
+				}
+			} else { /* minimum target gain extracted from codebook */
+				CNGChannelContext->receivedSIDGain = SIDGainCodebook[0];
+			}
 
-		/* convert qLSF to qLSP: qLSP = cos(qLSF) */
-		for (i=0; i<NB_LSP_COEFF; i++) {
-			CNGChannelContext->qLSP[i] = g729Cos_Q13Q15(currentqLSF[i]); /* ouput in Q0.15 */
+			/* retrieve LP from rfc3389 payload*/
+			/* rebuild the LP coefficients using algo given in G711 Appendix II section 5.2.1.3 */
+			/* first get back the quantized reflection coefficients from Index as in RFC3389 3.2 */
+			for (i=0; i<CNFilterOrder; i++) {
+				k[i] = MULT16_16(ADD16(bitStream[i+1],127), 258); /* k in Q15 */
+			}
+			for (i=CNFilterOrder; i<NB_LSP_COEFF; i++) { /* rfc3389 payload may provide a filter of order < NB_LSP_COEFF */
+				k[i] = 0; /* in that case, just set the last coefficients to 0 */
+			}
+
+			/* rebuild LP coefficients */
+			LPCoefficients[0] = ONE_IN_Q27;
+			LPCoefficients[1] = -SHL(k[0],12);
+			for (i=2; i<NB_LSP_COEFF+1; i++) {
+				/* update the previousIterationLPCoefficients needed for this one */
+				for (j=1; j<i; j++) {
+					previousIterationLPCoefficients[j] = LPCoefficients[j];
+				}
+
+				LPCoefficients[i] = -SHL(k[i-1],16); /* current coeff in Q31 while older one in Q27*/
+				for (j=1; j<i; j++) {
+					LPCoefficients[j] = MAC32_32_Q31(LPCoefficients[j], LPCoefficients[i], previousIterationLPCoefficients[i-j]); /*LPCoefficients in Q27 except for LPCoefficients[i] in Q31 */
+				}
+				LPCoefficients[i] = SHR(LPCoefficients[i], 4);
+			}
+
+			/* convert with rounding the LP Coefficients form Q27 to Q12, ignore first coefficient which is always 1 */
+			for (i=0; i<NB_LSP_COEFF; i++) {
+				LPCoefficientsQ12[i] = (word16_t)SATURATE(PSHR(LPCoefficients[i+1], 15), MAXINT16);
+			}
+
+			/* compute LSP from LP as we need to store LSP in context as the LP to use are interpolated with previous ones. Note: use LSP as qLSP */
+			if (!LP2LSPConversion(LPCoefficientsQ12, CNGChannelContext->qLSP)) {
+				/* unable to find the 10 roots repeat previous LSP */
+				memcpy(CNGChannelContext->qLSP, previousqLSP, NB_LSP_COEFF*sizeof(word16_t));
+			}
+		} else { /* regular G729 SID payload on 2 bytes */
+			word16_t currentqLSF[NB_LSP_COEFF]; /* buffer to the current qLSF in Q2.13 */
+			uint8_t L0 = (bitStream[0]>>7)&0x01;
+			uint8_t L1Index = (bitStream[0]>>2)&0x1F;
+			uint8_t L2Index = ((bitStream[0]&0x03)<<2) | ((bitStream[1]>>6)&0x03);
+
+			/* retrieve gain from codebook according to Gain parameter */
+			CNGChannelContext->receivedSIDGain = SIDGainCodebook[((bitStream[1])>>1)&0x1F];
+			/* Use L1 and L2(parameter for first and second stage vector of LSF quantizer) to retrieve LSP using subset index to address the complete L1 and L2L3 codebook */
+			for (i=0; i<NB_LSP_COEFF/2; i++) {
+				currentqLSF[i]=ADD16(L1[L1SubsetIndex[L1Index]][i], L2L3[L2SubsetIndex[L2Index]][i]);
+			}
+			for (i=NB_LSP_COEFF/2; i<NB_LSP_COEFF; i++) {
+				currentqLSF[i]=ADD16(L1[L1SubsetIndex[L1Index]][i], L2L3[L3SubsetIndex[L2Index]][i]);
+			}
+			computeqLSF(currentqLSF, previousLCodeWord, L0, noiseMAPredictor, noiseMAPredictorSum);
+
+			/* convert qLSF to qLSP: qLSP = cos(qLSF) */
+			for (i=0; i<NB_LSP_COEFF; i++) {
+				CNGChannelContext->qLSP[i] = g729Cos_Q13Q15(currentqLSF[i]); /* ouput in Q0.15 */
+			}
 		}
 	} /* Note: Itu implementation have information to sort missing and untransmitted packets and perform reconstruction of missed SID packet when it detects it, we cannot differentiate lost vs untransmitted packet so we don't do it */
 

@@ -108,9 +108,7 @@ static void sumAutocorrelationCoefficients(word32_t autoCorrelationCoefficients[
 /*****************************************************************************/
 static uint8_t residualEnergyQuantization(word32_t residualEnergy, int8_t residualEnergyScale, int8_t *decodedLogEnergy) {
 	word32_t acc;
-	//acc = SUB32(g729Log2_Q0Q16(residualEnergy), ADD32(676458, (int32_t)(residualEnergyScale<<16))); /* -676458 is log2(aw/(NCur*80)) acc is log2(E') in Q16 aw=0.125*/
-	//acc = SUB32(g729Log2_Q0Q16(residualEnergy), ADD32(610922, (int32_t)(residualEnergyScale<<16))); /* -676458 is log2(aw/(NCur*80)) acc is log2(E') in Q16 aw=0.25*/
-	acc = SUB32(g729Log2_Q0Q16(residualEnergy), ADD32(479849, (int32_t)(residualEnergyScale<<16))); /* -479849 is log2(aw/(NCur*80)) acc is log2(E') in Q16 aw = 1 */
+	acc = SUB32(g729Log2_Q0Q16(residualEnergy), ADD32(479849, (int32_t)(residualEnergyScale<<16))); /* -479849 is log2(aw/(NCur*80)) acc is log2(E') in Q16 aw = 1 as we use unlagged  autocorrelation coefficients */
 	acc = SHR32(acc,1); /* acc = log2(E') in Q15 */
 	acc = MULT16_32_Q15(INV_LOG2_10_Q15, acc); /* acc log10(E') in Q15 */
 
@@ -142,7 +140,7 @@ static uint8_t residualEnergyQuantization(word32_t residualEnergy, int8_t residu
 		return 6+steps;
 	} else { /* quantized energy support up to 66dB */
 		*decodedLogEnergy = 66;
-		return 32;
+		return 31;
 	}
 }
 
@@ -271,7 +269,7 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 	word32_t summedAutocorrelationCoefficients[NB_LSP_COEFF+1];
 	word16_t LPCoefficients[NB_LSP_COEFF]; /* in Q12 */
 	word16_t LSPCoefficients[NB_LSP_COEFF]; /* in Q15 */
-	word32_t reflectionCoefficient; /* not used here, by product of LP coefficients computation */
+	word32_t reflectionCoefficients[NB_LSP_COEFF]; /* product of LP Computation, may be used if we need to generate the RFC3389 payload */
 	word32_t residualEnergy; /* in variable scale(summedAutocorrelationCoefficientsScale) computed together with LP coefficients */
 	int8_t summedAutocorrelationCoefficientsScale;
 	uint8_t frameType;
@@ -295,7 +293,7 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 		summedAutocorrelationCoefficients, &summedAutocorrelationCoefficientsScale);
 
   	/* compute LP filter coefficients */
-  	autoCorrelation2LP(summedAutocorrelationCoefficients, LPCoefficients, &reflectionCoefficient, &residualEnergy); /* output residualEnergy with the same scale of input summedAutocorrelationCoefficients */
+	autoCorrelation2LP(summedAutocorrelationCoefficients, LPCoefficients, reflectionCoefficients, &residualEnergy); /* output residualEnergy with the same scale of input summedAutocorrelationCoefficients */
 
 	/* determine type of frame SID or untrasmitted */
 	if (DTXChannelContext->previousVADflag == 1) { /* if previous frame was active : we must generate a SID frame spec B.10 */
@@ -348,7 +346,7 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 		word32_t SIDLPCAutocorrelationCoefficients[NB_LSP_COEFF+1];
 		int8_t SIDLPCAutocorrelationCoefficientsScale;
 		word16_t pastAverageLPCoefficients[NB_LSP_COEFF]; /* in Q12 */
-		word32_t pastAverageReflectionCoefficient; /* not used here, by product of LP coefficients computation */
+		word32_t pastAverageReflectionCoefficients[NB_LSP_COEFF]; /* produced by LP computation, may be used if we have to generate RFC3389 payload */
 		word32_t pastAverageResidualEnergy; /* not used here, by-product of LP coefficients computation */
 
 		/* reset frame count */
@@ -359,11 +357,13 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 			SIDLPCAutocorrelationCoefficients, &SIDLPCAutocorrelationCoefficientsScale);
 
 	  	/* compute past average LP filter coefficients Ap in B4.2.2 */
-  		autoCorrelation2LP(SIDLPCAutocorrelationCoefficients, pastAverageLPCoefficients, &pastAverageReflectionCoefficient, &pastAverageResidualEnergy); /* output residualEnergy with the same scale of input summedAutocorrelationCoefficients */
+		autoCorrelation2LP(SIDLPCAutocorrelationCoefficients, pastAverageLPCoefficients, pastAverageReflectionCoefficients, &pastAverageResidualEnergy); /* output residualEnergy with the same scale of input summedAutocorrelationCoefficients */
 	
 		/* select coefficients according to eq B.17 we have Ap in SIDLPCoefficients and At in LPCoefficients, store result, in Q12 in SIDLPCoefficients */
 		/* check distance beetwen currently used filter and past filter : compute LPCoefficentAutocorrelation for the past average filter */
 		computeLPCoefficientAutocorrelation(pastAverageLPCoefficients, DTXChannelContext->SIDLPCoefficientAutocorrelation);
+
+		DTXChannelContext->decodedLogEnergy = decodedLogEnergy; /* store frame mean energy for RFC3389 payload generation */
 		
 		if (compareLPCFilters(DTXChannelContext->SIDLPCoefficientAutocorrelation, summedAutocorrelationCoefficients, residualEnergy, THRESHOLD3_IN_Q20) == 0) { /* use the past average filter */
 			/* generate LSP coefficient using the past LP coefficients */
@@ -372,6 +372,8 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 				memcpy(LSPCoefficients, previousqLSPCoefficients, NB_LSP_COEFF*sizeof(word16_t));
 			}
 			/* LPCoefficientAutocorrelation are already in DTXChannelContext */ 
+			/* save the reflection coefficients in the DTX context as they will be requested to generate RFC3389 payload */
+			memcpy(DTXChannelContext->reflectionCoefficients, pastAverageReflectionCoefficients, NB_LSP_COEFF*sizeof(word32_t));
 		} else { /* use filter computed on current and previous frame */
 			/* compute the LPCoefficientAutocorrelation for this filter and store them in DTXChannel */
 			computeLPCoefficientAutocorrelation(LPCoefficients, DTXChannelContext->SIDLPCoefficientAutocorrelation);
@@ -380,6 +382,8 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 				/* unable to find the 10 roots repeat previous LSP */
 				memcpy(LSPCoefficients, previousqLSPCoefficients, NB_LSP_COEFF*sizeof(word16_t));
 			}
+			/* save the reflection coefficients in the DTX context as they will be requested to generate RFC3389 payload */
+			memcpy(DTXChannelContext->reflectionCoefficients, reflectionCoefficients, NB_LSP_COEFF*sizeof(word32_t));
 		}
 
 		/* update previousLSP coefficient buffer */

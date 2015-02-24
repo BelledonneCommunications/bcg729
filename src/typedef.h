@@ -22,6 +22,11 @@
 #define TYPEDEF_H
 
 #include <stdint.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecParameters.h"
 #include "bcg729/encoder.h"
 #include "bcg729/decoder.h"
@@ -72,6 +77,8 @@ struct bcg729DTXChannelContextStruct_struct {
 	word16_t smoothedSIDGain; /* gain in Q3 */
 	uint16_t pseudoRandomSeed; /* seed used in the pseudo random number generator for excitation generation */
 	word16_t qLSPCoefficients[NB_LSP_COEFF]; /* current Quantized LSP coefficient in Q15, saved to be re-used in case of untransmitted frame */
+	word32_t reflectionCoefficients[NB_LSP_COEFF]; /* used to generate the RFC3389 payload, generated during LP computation */
+	int8_t decodedLogEnergy; /* log10(frame residual energy), used to generate noise level for RFC3389 paylaod */
 };
 typedef struct bcg729DTXChannelContextStruct_struct bcg729DTXChannelContextStruct;
 

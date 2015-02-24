@@ -50,10 +50,12 @@ BCG729_VISIBILITY void closeBcg729DecoderChannel(bcg729DecoderChannelContextStru
 /*    parameters:                                                            */
 /*      -(i) decoderChannelContext : the channel context data                */
 /*      -(i) bitStream : 15 parameters on 80 bits                            */
+/*      -(i): bitStreamLength : in bytes, length of previous buffer          */
 /*      -(i) frameErased: flag: true, frame has been erased                  */
 /*      -(i) SIDFrameFlag: flag: true, frame is a SID one                    */
+/*      -(i) rfc3389PayloadFlag: true when CN payload follow rfc3389         */
 /*      -(o) signal : a decoded frame 80 samples (16 bits PCM)               */
 /*                                                                           */
 /*****************************************************************************/
-BCG729_VISIBILITY void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, uint8_t SIDFrameFlag, int16_t signal[]);
+BCG729_VISIBILITY void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t bitStreamLength, uint8_t frameErasureFlag, uint8_t SIDFrameFlag, uint8_t rfc3389PayloadFlag, int16_t signal[]);
 #endif /* ifndef DECODER_H */

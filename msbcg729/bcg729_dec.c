@@ -30,7 +30,7 @@
 
 /* decoder struct: context for decoder channel and concealment */
 struct bcg729Decoder_struct {
-    bcg729DecoderChannelContextStruct *decoderChannelContext;
+	bcg729DecoderChannelContextStruct *decoderChannelContext;
 	MSConcealerContext *concealer;
 };
 
@@ -54,7 +54,7 @@ static void filter_process(MSFilter *f){
 			uint8_t SIDFrameFlag = ((inputMessage->b_wptr-inputMessage->b_rptr)==NOISE_BITSTREAM_FRAME_SIZE)?1:0;
 			outputMessage = allocb(SIGNAL_FRAME_SIZE,0);
 			mblk_meta_copy(inputMessage, outputMessage);
-			bcg729Decoder(obj->decoderChannelContext, inputMessage->b_rptr, 0, SIDFrameFlag, (int16_t *)(outputMessage->b_wptr));
+			bcg729Decoder(obj->decoderChannelContext, inputMessage->b_rptr, (SIDFrameFlag==1)?NOISE_BITSTREAM_FRAME_SIZE:BITSTREAM_FRAME_SIZE, 0, SIDFrameFlag, 0, (int16_t *)(outputMessage->b_wptr));
 			outputMessage->b_wptr+=SIGNAL_FRAME_SIZE;
 			inputMessage->b_rptr += (SIDFrameFlag==1)?NOISE_BITSTREAM_FRAME_SIZE:BITSTREAM_FRAME_SIZE;
 			ms_queue_put(f->outputs[0],outputMessage);
@@ -65,7 +65,7 @@ static void filter_process(MSFilter *f){
 
 	if (ms_concealer_context_is_concealement_required(obj->concealer, f->ticker->time)) {
 		outputMessage = allocb(SIGNAL_FRAME_SIZE,0);
-		bcg729Decoder(obj->decoderChannelContext, NULL, 1, 0, (int16_t *)(outputMessage->b_wptr));
+		bcg729Decoder(obj->decoderChannelContext, NULL, 0, 1, 0, 0, (int16_t *)(outputMessage->b_wptr));
 		outputMessage->b_wptr+=SIGNAL_FRAME_SIZE;
 		mblk_set_plc_flag(outputMessage, 1);
 		ms_queue_put(f->outputs[0],outputMessage);

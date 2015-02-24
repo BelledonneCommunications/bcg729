@@ -57,8 +57,8 @@ int main(int argc, char *argv[] )
 	FILE *fpBinOutput;
 
 	/*** input and output buffers ***/
-	uint16_t inputBuffer[NB_PARAMETERS+1]; /* input buffer: an array containing the 15 parameters and the frame erasure flag */
-	uint8_t bitStream[10]; /* binary input for the decoder */
+	uint16_t inputBuffer[NB_PARAMETERS+2]; /* input buffer: an array containing the 15 parameters and the frame erasure flag and VAD flag */
+	uint8_t bitStream[11]; /* binary input for the decoder */
 	int16_t outputBuffer[L_FRAME]; /* output buffer: the reconstructed signal */ 
 
 	/*** inits ***/
@@ -95,15 +95,30 @@ int main(int argc, char *argv[] )
 	for (j=0; j<LOOP_N; j++) {
 	/* perf measurement */
 		/*** loop over input file ***/
-		while(fscanf(fpInput, "%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd", &(inputBuffer[0]), &(inputBuffer[1]), &(inputBuffer[2]), &(inputBuffer[3]), &(inputBuffer[4]), &(inputBuffer[5]), &(inputBuffer[6]), &(inputBuffer[7]), &(inputBuffer[8]), &(inputBuffer[9]), &(inputBuffer[10]), &(inputBuffer[11]), &(inputBuffer[12]), &(inputBuffer[13]), &(inputBuffer[14]), &(inputBuffer[15]))==16) /* index 4 and 5 are inverted to get P0 in 4 and P1 in 5 in the array */
+		while(fscanf(fpInput, "%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd,%hd", &(inputBuffer[0]), &(inputBuffer[1]), &(inputBuffer[2]), &(inputBuffer[3]), &(inputBuffer[4]), &(inputBuffer[5]), &(inputBuffer[6]), &(inputBuffer[7]), &(inputBuffer[8]), &(inputBuffer[9]), &(inputBuffer[10]), &(inputBuffer[11]), &(inputBuffer[12]), &(inputBuffer[13]), &(inputBuffer[14]), &(inputBuffer[15]), &(inputBuffer[16]))==17) /* index 4 and 5 are inverted to get P0 in 4 and P1 in 5 in the array */
 		{ /* input buffer contains the parameters and in [15] the frame erasure flag */
 			int i;
+			uint8_t bitStreamLength;
 			framesNbr++;
 
-			parametersArray2BitStream(inputBuffer, bitStream);
+			if (inputBuffer[16]==1) { /* active frame */
+				parametersArray2BitStream(inputBuffer, bitStream);
+				bitStreamLength = 10;
+			} else { /* SID frame */
+				if (inputBuffer[16]==0) {/* non transmitted frame */
+					inputBuffer[15] = 1;
+					bitStreamLength = 0;
+				} else { /* actual SID frame */
+					for (i=0; i<11; i++) {
+						bitStream[i] = inputBuffer[i];
+					}
+					bitStreamLength = 11;
+				}
+			}
+
 
 			start = clock();
-			bcg729Decoder(decoderChannelContext, bitStream, 10, inputBuffer[15], 0, 0, outputBuffer);
+			bcg729Decoder(decoderChannelContext, inputBuffer[15]==0?bitStream:NULL, bitStreamLength, inputBuffer[15], inputBuffer[16]!=1?1:0, 1, outputBuffer);
 			end = clock();
 
 			cpu_time_used += ((double) (end - start));

@@ -100,12 +100,14 @@ void closeBcg729DecoderChannel(bcg729DecoderChannelContextStruct *decoderChannel
 /*    parameters:                                                            */
 /*      -(i) decoderChannelContext : the channel context data                */
 /*      -(i) bitStream : 15 parameters on 80 bits                            */
+/*      -(i): bitStreamLength : in bytes, length of previous buffer          */
 /*      -(i) frameErased: flag: true, frame has been erased                  */
 /*      -(i) SIDFrameFlag: flag: true, frame is a SID one                    */
+/*      -(i) rfc3389PayloadFlag: true when CN payload follow rfc3389         */
 /*      -(o) signal : a decoded frame 80 samples (16 bits PCM)               */
 /*                                                                           */
 /*****************************************************************************/
-void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, uint8_t SIDFrameFlag, int16_t signal[])
+void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t bitStreamLength, uint8_t frameErasureFlag, uint8_t SIDFrameFlag, uint8_t rfc3389PayloadFlag, int16_t signal[])
 {
 	int i;
 	uint16_t parameters[NB_PARAMETERS];
@@ -165,7 +167,7 @@ void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uin
 
 	/* this is a SID frame, process it using the dedicated function */
 	if (SIDFrameFlag == 1) {
-		decodeSIDframe(decoderChannelContext->CNGChannelContext, decoderChannelContext->previousFrameIsActiveFlag, bitStream, &(decoderChannelContext->excitationVector[L_PAST_EXCITATION]), decoderChannelContext->previousqLSP, LP, &(decoderChannelContext->CNGpseudoRandomSeed), decoderChannelContext->previousLCodeWord);
+		decodeSIDframe(decoderChannelContext->CNGChannelContext, decoderChannelContext->previousFrameIsActiveFlag, bitStream, bitStreamLength, &(decoderChannelContext->excitationVector[L_PAST_EXCITATION]), decoderChannelContext->previousqLSP, LP, &(decoderChannelContext->CNGpseudoRandomSeed), decoderChannelContext->previousLCodeWord, rfc3389PayloadFlag);
 		decoderChannelContext->previousFrameIsActiveFlag = 0;
 
 		/* loop over the two subframes */
