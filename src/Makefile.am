@@ -1,8 +1,6 @@
-if BUILD_MSBCG729
-noinst_LTLIBRARIES = libbcg729.la
-else
+
 lib_LTLIBRARIES = libbcg729.la
-endif
+
 
 libbcg729_la_SOURCES=	LP2LSPConversion.c \
 			LPSynthesisFilter.c \
