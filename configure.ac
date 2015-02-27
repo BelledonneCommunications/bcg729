@@ -39,7 +39,22 @@ fi
 # check for libraries that have pkg-config files installed
 PKG_CHECK_MODULES(ORTP, ortp >= 0.21.0,[found_ortp=true],foo=bar)
 PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.8.99,[found_ms2=true],foo=bar)
-AM_CONDITIONAL(BUILD_MSBCG729, test x${found_ms2}x${found_ortp}x${enable_msplugin} = xtruextruexyes)
+
+if test x${found_ms2}x${found_ortp}x${enable_msplugin} = xtruextruexyes ; then
+	build_msbcg729=true
+else
+	ORTP_CFLAGS=
+	ORTP_LIBS=
+	MEDIASTREAMER_CFLAGS=
+	MEDIASTREAMER_LIBS=
+fi
+
+AC_SUBST(ORTP_CFLAGS)
+AC_SUBST(ORTP_LIBS)
+AC_SUBST(MEDIASTREAMER_CFLAGS)
+AC_SUBST(MEDIASTREAMER_LIBS)
+
+AM_CONDITIONAL(BUILD_MSBCG729, test x$build_msbcg729 = xtrue)
 
 VISIBILITY_CFLAGS=
 case "$target_os" in
