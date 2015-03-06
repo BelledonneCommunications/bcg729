@@ -38,11 +38,6 @@ option(ENABLE_TESTS "Enable compilation of the tests." No)
 option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." Yes)
 
 
-if(MSVC)
-	include_directories(${CMAKE_INSTALL_PREFIX}/include/MSVC)
-endif()
-
-
 include(CheckIncludeFile)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
 check_include_file("inttypes.h" HAVE_INTTYPES_H)
@@ -74,6 +69,10 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/src
 )
+set(MSVC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/MSVC")
+if(MSVC)
+	include_directories(${MSVC_INCLUDE_DIR})
+endif()
 
 add_definitions(-DHAVE_CONFIG_H)
 if(MSVC)
