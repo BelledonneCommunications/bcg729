@@ -36,16 +36,12 @@ set(VERSION "${PACKAGE_VERSION}")
 
 option(ENABLE_TESTS "Enable compilation of the tests." No)
 option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." Yes)
-set(WITH_MS2 "${CMAKE_INSTALL_PREFIX}" CACHE STRING "Set prefix where the mediastreamer libraries can be found (ex:/usr or /usr/local)")
-set(WITH_ORTP "${CMAKE_INSTALL_PREFIX}" CACHE STRING "Set prefix where the oRTP library can be found (ex:/usr or /usr/local)")
 
 
 if(MSVC)
 	include_directories(${CMAKE_INSTALL_PREFIX}/include/MSVC)
 endif()
 
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_PREFIX_PATH}/share/cmake/Modules)
 
 include(CheckIncludeFile)
 check_include_file("dlfcn.h" HAVE_DLFCN_H)
@@ -60,11 +56,10 @@ check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
 check_include_file("unistd.h" HAVE_UNISTD_H)
 
 if(ENABLE_MSPLUGIN)
-	find_package(ORTP)
-	find_package(MS2)
+	find_package(Mediastreamer2)
 
-	if(NOT (ORTP_FOUND AND MS2_FOUND))
-		message(WARNING "Could not find the oRTP and/or mediastreamer2 libraries!")
+	if(NOT MEDIASTREAMER2_FOUND)
+		message(WARNING "Could not find the mediastreamer2 libraries!")
 		set(ENABLE_MSPLUGIN OFF CACHE BOOL "Enable compilation of the mediastreamer2 plugin." FORCE)
 	endif()
 endif()
