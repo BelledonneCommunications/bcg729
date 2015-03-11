@@ -61,7 +61,7 @@ if(MSVC)
 	set_target_properties(bcg729 PROPERTIES PREFIX "lib")
 endif()
 
-install(TARGETS bcg729
+install(TARGETS bcg729 EXPORT Bcg729Targets
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib

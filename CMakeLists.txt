@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(BCG729 C)
 
 
@@ -36,35 +36,13 @@ set(VERSION "${PACKAGE_VERSION}")
 
 option(ENABLE_TESTS "Enable compilation of the tests." No)
 option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." Yes)
-set(WITH_MS2 "${CMAKE_INSTALL_PREFIX}" CACHE STRING "Set prefix where the mediastreamer libraries can be found (ex:/usr or /usr/local)")
-set(WITH_ORTP "${CMAKE_INSTALL_PREFIX}" CACHE STRING "Set prefix where the oRTP library can be found (ex:/usr or /usr/local)")
 
-
-if(MSVC)
-	include_directories(${CMAKE_INSTALL_PREFIX}/include/MSVC)
-endif()
-
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_PREFIX_PATH}/share/cmake/Modules)
-
-include(CheckIncludeFile)
-check_include_file("dlfcn.h" HAVE_DLFCN_H)
-check_include_file("inttypes.h" HAVE_INTTYPES_H)
-check_include_file("memory.h" HAVE_MEMORY_H)
-check_include_file("stdint.h" HAVE_STDINT_H)
-check_include_file("stdlib.h" HAVE_STDLIB_H)
-check_include_file("strings.h" HAVE_STRINGS_H)
-check_include_file("string.h" HAVE_STRING_H)
-check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
-check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
-check_include_file("unistd.h" HAVE_UNISTD_H)
 
 if(ENABLE_MSPLUGIN)
-	find_package(ORTP)
-	find_package(MS2)
+	find_package(Mediastreamer2)
 
-	if(NOT (ORTP_FOUND AND MS2_FOUND))
-		message(WARNING "Could not find the oRTP and/or mediastreamer2 libraries!")
+	if(NOT MEDIASTREAMER2_FOUND)
+		message(WARNING "Could not find the mediastreamer2 libraries!")
 		set(ENABLE_MSPLUGIN OFF CACHE BOOL "Enable compilation of the mediastreamer2 plugin." FORCE)
 	endif()
 endif()
@@ -79,6 +57,10 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}/src
 )
+set(MSVC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/MSVC")
+if(MSVC)
+	include_directories(${MSVC_INCLUDE_DIR})
+endif()
 
 add_definitions(-DHAVE_CONFIG_H)
 if(MSVC)
@@ -94,3 +76,31 @@ endif()
 if(ENABLE_TESTS)
 	add_subdirectory(test)
 endif()
+
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+	VERSION ${PACKAGE_VERSION}
+	COMPATIBILITY AnyNewerVersion
+)
+export(EXPORT Bcg729Targets
+	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
+	NAMESPACE BelledonneCommunications::
+)
+configure_file(Bcg729Config.cmake
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+	COPYONLY
+)
+
+set(ConfigPackageLocation lib/cmake/Bcg729)
+install(EXPORT Bcg729Targets
+	FILE Bcg729Targets.cmake
+	NAMESPACE BelledonneCommunications::
+	DESTINATION ${ConfigPackageLocation}
+)
+install(FILES
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+	DESTINATION ${ConfigPackageLocation}
+)
