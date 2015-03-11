@@ -22,6 +22,12 @@
 #include "mediastreamer2/mscodecutils.h"
 #include "bcg729/encoder.h"
 
+#ifdef HAVE_ms_bufferizer_fill_current_metas
+#define ms_bufferizer_fill_current_metas(b,m) ms_bufferizer_fill_current_metas(b,m)
+#else
+#define ms_bufferizer_fill_current_metas(b,m)
+#endif
+
 /*filter common method*/
 struct bcg729Encoder_struct {
     bcg729EncoderChannelContextStruct *encoderChannelContext;
@@ -69,6 +75,7 @@ static void filter_process(MSFilter *f){
 		}
 		obj->ts+=obj->ptime*8;
 		mblk_set_timestamp_info(outputMessage,obj->ts);
+		ms_bufferizer_fill_current_metas(obj->bufferizer, outputMessage);
 		ms_queue_put(f->outputs[0],outputMessage);
 	}
 
