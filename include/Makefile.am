@@ -1,6 +1,6 @@
 SUBDIRS = bcg729
 
-include_HEADERS= adaptativeCodebookSearch.h \
+private_headers= adaptativeCodebookSearch.h \
 		basicOperationsMacros.h \
 		codebooks.h \
 		codecParameters.h \
@@ -28,4 +28,4 @@ include_HEADERS= adaptativeCodebookSearch.h \
 		typedef.h \
 		utils.h 
 
-EXTRA_DIST=$(include_HEADERS)
+EXTRA_DIST=$(private_headers)
