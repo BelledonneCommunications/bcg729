@@ -3,7 +3,7 @@
 
 
 
-AC_INIT([bcg729],[0.2])
+AC_INIT([bcg729],[1.0.0])
 AC_CANONICAL_SYSTEM
 AC_PREREQ(2.63)
 AC_CONFIG_SRCDIR([src/encoder.c])
