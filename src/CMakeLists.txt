@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-set(BCG729_SOURCE_FILES
+set(SOURCE_FILES
 	adaptativeCodebookSearch.c
 	codebooks.c
 	computeAdaptativeCodebookGain.c
@@ -46,16 +46,20 @@ set(BCG729_SOURCE_FILES
 	utils.c
 )
 
-add_library(bcg729 SHARED ${BCG729_SOURCE_FILES})
-set_target_properties(bcg729 PROPERTIES VERSION 0)
-if(MSVC)
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/libbcg729.pdb
-			DESTINATION bin
-			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-		)
+if (ENABLE_STATIC)
+	add_library(bcg729 STATIC ${SOURCE_FILES})
+else()
+	add_library(bcg729 SHARED ${SOURCE_FILES})
+	set_target_properties(bcg729 PROPERTIES VERSION 0)
+	if(MSVC)
+		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/libbcg729.pdb
+				DESTINATION bin
+				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+		endif()
+		set_target_properties(bcg729 PROPERTIES PREFIX "lib")
 	endif()
-	set_target_properties(bcg729 PROPERTIES PREFIX "lib")
 endif()
 
 install(TARGETS bcg729 EXPORT Bcg729Targets
@@ -65,8 +69,8 @@ install(TARGETS bcg729 EXPORT Bcg729Targets
 	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
 
-set(ABS_BCG729_SOURCE_FILES )
-foreach(elem ${BCG729_SOURCE_FILES})
-	list(APPEND ABS_BCG729_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${elem}")
+set(ABS_SOURCE_FILES )
+foreach(elem ${SOURCE_FILES})
+	list(APPEND ABS_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${elem}")
 endforeach()
-set(BCG729_SOURCE_FILES ${ABS_BCG729_SOURCE_FILES} PARENT_SCOPE)
+set(SOURCE_FILES ${ABS_SOURCE_FILES} PARENT_SCOPE)
