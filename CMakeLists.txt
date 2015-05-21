@@ -34,9 +34,9 @@ set(PACKAGE_URL "")
 set(VERSION "${PACKAGE_VERSION}")
 
 
-option(ENABLE_TESTS "Enable compilation of the tests." No)
-option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." Yes)
-option(ENABLE_STATIC "Build static library (default is shared library)." OFF)
+option(ENABLE_TESTS "Enable compilation of the tests." NO)
+option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." YES)
+option(ENABLE_STATIC "Build static library (default is shared library)." NO)
 
 if(ENABLE_MSPLUGIN)
 	find_package(Mediastreamer2)
