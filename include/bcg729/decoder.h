@@ -23,7 +23,7 @@
 typedef struct bcg729DecoderChannelContextStruct_struct bcg729DecoderChannelContextStruct;
 #include <stdint.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define BCG729_VISIBILITY
 #else
 #define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
