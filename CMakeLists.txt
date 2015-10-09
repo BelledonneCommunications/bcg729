@@ -39,7 +39,11 @@ option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." YES)
 option(ENABLE_STATIC "Build static library (default is shared library)." NO)
 
 if(ENABLE_MSPLUGIN)
-	find_package(Mediastreamer2)
+	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
+		include("${EP_ms2_CONFIG_DIR}/Mediastreamer2Config.cmake")
+	else()
+		find_package(Mediastreamer2)
+	endif()
 
 	if(NOT MEDIASTREAMER2_FOUND)
 		message(WARNING "Could not find the mediastreamer2 libraries!")
@@ -74,7 +78,7 @@ if(ENABLE_MSPLUGIN)
 	add_subdirectory(msbcg729)
 endif()
 if(ENABLE_TESTS)
-	add_subdirectory(test)
+	#add_subdirectory(test)
 endif()
 
 
