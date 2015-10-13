@@ -90,7 +90,6 @@ write_basic_package_version_file(
 )
 export(EXPORT Bcg729Targets
 	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
-	NAMESPACE BelledonneCommunications::
 )
 configure_file(Bcg729Config.cmake
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
@@ -100,7 +99,6 @@ configure_file(Bcg729Config.cmake
 set(ConfigPackageLocation lib/cmake/Bcg729)
 install(EXPORT Bcg729Targets
 	FILE Bcg729Targets.cmake
-	NAMESPACE BelledonneCommunications::
 	DESTINATION ${ConfigPackageLocation}
 )
 install(FILES
