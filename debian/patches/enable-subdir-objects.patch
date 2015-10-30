@@ -1,0 +1,17 @@
+Description: Enable subdir-objects in Automake
+Author: Felix Lechner <felix.lechner@gmail.com>
+Forwarded: no
+Last-Update: 2015-05-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/configure.ac
++++ b/configure.ac
+@@ -8,7 +8,7 @@ AC_CANONICAL_SYSTEM
+ AC_PREREQ(2.63)
+ AC_CONFIG_SRCDIR([src/encoder.c])
+ AC_CONFIG_MACRO_DIR([m4])
+-AM_INIT_AUTOMAKE([tar-ustar --warnings=no-portability])
++AM_INIT_AUTOMAKE([tar-ustar subdir-objects --warnings=no-portability])
+ AC_PROG_LIBTOOL
+ AC_PROG_CC
+ AC_CONFIG_HEADERS(config.h)

@@ -1,0 +1,16 @@
+Description: Do not build static plugin, and don't version the shared one
+Author: Felix Lechner <felix.lechner@gmail.com>
+Forwarded: no
+Last-Update: 2015-05-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/msbcg729/Makefile.am
++++ b/msbcg729/Makefile.am
+@@ -10,6 +10,6 @@ msbcg729_la_LIBADD=\
+ 	$(MEDIASTREAMER_LIBS) \
+ 	$(top_builddir)/src/libbcg729.la
+ 
+-msbcg729_la_LDFLAGS=-module -no-undefined
++msbcg729_la_LDFLAGS=-module -no-undefined -avoid-version -shared
+ AM_CPPFLAGS = -I$(top_srcdir)/include
+ msbcg729_la_CFLAGS=  $(ORTP_CFLAGS) $(MEDIASTREAMER_CFLAGS)

@@ -1,0 +1,29 @@
+Description: Remove lib prefix from mediastreamer plugin
+Author: Felix Lechner <felix.lechner@gmail.com>
+Forwarded: no
+Last-Update: 2015-05-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/msbcg729/Makefile.am
++++ b/msbcg729/Makefile.am
+@@ -1,15 +1,15 @@
+ 
+ pluginsdir = $(libdir)/mediastreamer/plugins
+ 
+-plugins_LTLIBRARIES=libmsbcg729.la
++plugins_LTLIBRARIES=msbcg729.la
+ 
+-libmsbcg729_la_SOURCES=bcg729_dec.c bcg729_enc.c
++msbcg729_la_SOURCES=bcg729_dec.c bcg729_enc.c
+ 
+-libmsbcg729_la_LIBADD=\
++msbcg729_la_LIBADD=\
+ 	$(ORTP_LIBS) \
+ 	$(MEDIASTREAMER_LIBS) \
+ 	$(top_builddir)/src/libbcg729.la
+ 
+-libmsbcg729_la_LDFLAGS=-module -no-undefined
++msbcg729_la_LDFLAGS=-module -no-undefined
+ AM_CPPFLAGS = -I$(top_srcdir)/include
+-libmsbcg729_la_CFLAGS=  $(ORTP_CFLAGS) $(MEDIASTREAMER_CFLAGS)
++msbcg729_la_CFLAGS=  $(ORTP_CFLAGS) $(MEDIASTREAMER_CFLAGS)
