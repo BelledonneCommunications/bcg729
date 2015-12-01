@@ -82,7 +82,7 @@ static void filter_process(MSFilter *f){
 		/* do not enqueue the message if no data out (DTX untransmitted frames) */
 		if (totalPacketDataLength>0) {
 			mblk_set_timestamp_info(outputMessage,obj->ts);
-		ms_bufferizer_fill_current_metas(obj->bufferizer, outputMessage);
+			ms_bufferizer_fill_current_metas(obj->bufferizer, outputMessage);
 			ms_queue_put(f->outputs[0],outputMessage);
 		}
 	}
@@ -115,7 +115,9 @@ static int filter_add_fmtp(MSFilter *f, void *arg){
 			obj->max_ptime=100;
 		}
 		ms_message("MSBCG729Enc: got maxptime=%i",obj->max_ptime);
-	} else 	if (fmtp_get_value(fmtp,"ptime",buf,sizeof(buf))){
+	}
+
+	if (fmtp_get_value(fmtp,"ptime",buf,sizeof(buf))){
 		obj->ptime=atoi(buf);
 		if (obj->ptime > obj->max_ptime) {
 			obj->ptime=obj->max_ptime;
@@ -125,8 +127,10 @@ static int filter_add_fmtp(MSFilter *f, void *arg){
 		}
 		
 		ms_message("MSBCG729Enc: got ptime=%i",obj->ptime);
-	} else if (fmtp_get_value(fmtp,"annexb",buf,sizeof(buf))){
-		if (strncmp(buf, "yes",3)) {
+	}
+
+	if (fmtp_get_value(fmtp,"annexb",buf,sizeof(buf))){
+		if (strncmp(buf, "yes",3) == 0) {
 			obj->enableVAD = 1;
 			ms_message("MSBCG729Enc: enable VAD/DTX - AnnexB");
 		}
