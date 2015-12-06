@@ -45,7 +45,7 @@
 #define SATURATE(x,a) (((x)>(a) ? (a) : (x)<-(a+1) ? -(a+1) : (x)))
 
 /* absolute value */
-#define ABS(a) ((a>0) ? a : -a)
+#define ABS(a) (((a)>0) ? (a) : -(a))
 
 /*** add and sub ***/
 #define ADD16(a,b) ((word16_t)((word16_t)(a)+(word16_t)(b)))
