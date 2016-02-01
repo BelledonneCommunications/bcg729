@@ -190,8 +190,8 @@ extern MSFilterDesc ms_bcg729_dec_desc;
 	#define VERSION "debug"
 #endif
 
-MS_PLUGIN_DECLARE(void) libmsbcg729_init(void){
-	ms_filter_register(&ms_bcg729_enc_desc);
-	ms_filter_register(&ms_bcg729_dec_desc);
+MS_PLUGIN_DECLARE(void) libmsbcg729_init(MSFactory * factory){
+	ms_factory_register_filter(factory, &ms_bcg729_enc_desc);
+	ms_factory_register_filter(factory, &ms_bcg729_dec_desc);
 	ms_message(" libmsbcg729 " VERSION " plugin loaded");
 }
