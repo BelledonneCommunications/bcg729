@@ -27,11 +27,8 @@ set(SOURCE_FILES
 
 include_directories(${MEDIASTREAMER2_INCLUDE_DIRS})
 
-add_library(msbcg729-objects OBJECT ${SOURCE_FILES})
-set_target_properties(msbcg729-objects PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-
 if(ENABLE_STATIC)
-	add_library(msbcg729-static STATIC $<TARGET_OBJECTS:bcg729-objects> $<TARGET_OBJECTS:msbcg729-objects>)
+	add_library(msbcg729-static STATIC ${BCG729_SOURCE_FILES} ${SOURCE_FILES})
 	set_target_properties(msbcg729-static PROPERTIES OUTPUT_NAME msbcg729)
 	target_link_libraries(msbcg729-static ${MEDIASTREAMER2_LIBRARIES})
 	install(TARGETS msbcg729-static
@@ -40,7 +37,7 @@ if(ENABLE_STATIC)
 	)
 endif()
 if(ENABLE_SHARED)
-	add_library(msbcg729 MODULE $<TARGET_OBJECTS:bcg729-objects> $<TARGET_OBJECTS:msbcg729-objects>)
+	add_library(msbcg729 MODULE ${BCG729_SOURCE_FILES} ${SOURCE_FILES})
 	set_target_properties(msbcg729 PROPERTIES SOVERSION 0)
 	target_link_libraries(msbcg729 ${MEDIASTREAMER2_LIBRARIES})
 	if(MSVC)
