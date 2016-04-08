@@ -1,7 +1,9 @@
 check_PROGRAMS=adaptativeCodebookSearchTest computeAdaptativeCodebookGainTest computeLPTest computeWeightedSpeechTest decodeAdaptativeCodeVectorTest decodeFixedCodeVectorTest decodeGainsTest decodeLSPTest \
        decoderTest encoderTest decoderMultiChannelTest encoderMultiChannelTest findOpenLoopPitchDelayTest fixedCodebookSearchTest g729FixedPointMathTest gainQuantizationTest interpolateqLSPAndConvert2LPTest \
        LP2LSPConversionTest LPSynthesisFilterTest LSPQuantizationTest postFilterTest postProcessingTest preProcessingTest computeNoiseExcitationTest CNGdecoderTest CNGRFC3389decoderTest encoderVADTest
-util_src=$(top_srcdir)/test/src/testUtils.c
+util_src= \
+	$(top_srcdir)/test/src/testUtils.c \
+	$(top_srcdir)/test/src/testUtils.h
 
 adaptativeCodebookSearchTest_SOURCES=$(top_srcdir)/test/src/adaptativeCodebookSearchTest.c $(util_src)
 computeAdaptativeCodebookGainTest_SOURCES=$(top_srcdir)/test/src/computeAdaptativeCodebookGainTest.c $(util_src)

@@ -31,5 +31,5 @@ include("${CMAKE_CURRENT_LIST_DIR}/Bcg729Targets.cmake")
 
 get_filename_component(BCG729_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(BCG729_INCLUDE_DIRS "${BCG729_CMAKE_DIR}/../../../include")
-set(BCG729_LIBRARIES BelledonneCommunications::bcg729)
+set(BCG729_LIBRARIES bcg729)
 set(BCG729_FOUND 1)

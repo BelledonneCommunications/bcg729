@@ -21,12 +21,12 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.0)
-project(BCG729 C)
+project(bcg729 VERSION 1.0.1 LANGUAGES C)
 
 
-set(PACKAGE "bcg729")
-set(PACKAGE_NAME "${PACKAGE}")
-set(PACKAGE_VERSION "0.1")
+set(PACKAGE "${PROJECT_NAME}")
+set(PACKAGE_NAME "${PROJECT_NAME}")
+set(PACKAGE_VERSION "${PROJECT_VERSION}")
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set(PACKAGE_BUGREPORT "support@belledonne-communications.com")
 set(PACKAGE_TARNAME "bcg729")
@@ -34,12 +34,19 @@ set(PACKAGE_URL "")
 set(VERSION "${PACKAGE_VERSION}")
 
 
-option(ENABLE_TESTS "Enable compilation of the tests." No)
-option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." Yes)
+option(ENABLE_SHARED "Build shared library." YES)
+option(ENABLE_STATIC "Build static library." YES)
+option(ENABLE_TESTS "Enable compilation of the tests." NO)
+option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." YES)
 
+include(GNUInstallDirs)
 
 if(ENABLE_MSPLUGIN)
-	find_package(Mediastreamer2)
+	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
+		include("${EP_ms2_CONFIG_DIR}/Mediastreamer2Config.cmake")
+	else()
+		find_package(Mediastreamer2)
+	endif()
 
 	if(NOT MEDIASTREAMER2_FOUND)
 		message(WARNING "Could not find the mediastreamer2 libraries!")
@@ -66,7 +73,10 @@ add_definitions(-DHAVE_CONFIG_H)
 if(MSVC)
 	add_definitions("/W3")
 else()
-	add_definitions("-Wall" "-Werror")
+	add_definitions("-Wall")
+	if (NOT IOS)
+		add_definitions("-Werror")
+	endif()
 endif()
 
 add_subdirectory(src)
@@ -74,7 +84,7 @@ if(ENABLE_MSPLUGIN)
 	add_subdirectory(msbcg729)
 endif()
 if(ENABLE_TESTS)
-	add_subdirectory(test)
+	#add_subdirectory(test)
 endif()
 
 
@@ -86,21 +96,19 @@ write_basic_package_version_file(
 )
 export(EXPORT Bcg729Targets
 	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
-	NAMESPACE BelledonneCommunications::
 )
 configure_file(Bcg729Config.cmake
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
 	COPYONLY
 )
 
-set(ConfigPackageLocation lib/cmake/Bcg729)
+set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
 install(EXPORT Bcg729Targets
 	FILE Bcg729Targets.cmake
-	NAMESPACE BelledonneCommunications::
-	DESTINATION ${ConfigPackageLocation}
+	DESTINATION ${CONFIG_PACKAGE_LOCATION}
 )
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-	DESTINATION ${ConfigPackageLocation}
+	DESTINATION ${CONFIG_PACKAGE_LOCATION}
 )

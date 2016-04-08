@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = bcg729.spec 
+EXTRA_DIST = bcg729.spec Bcg729Config.cmake CMakeLists.txt config.h.cmake msbcg729/CMakeLists.txt src/CMakeLists.txt
 SUBDIRS =  include src
 
 if BUILD_MSBCG729
