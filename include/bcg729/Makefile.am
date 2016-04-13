@@ -7,4 +7,3 @@ if !BUILD_MSBCG729
 bcg729_include_HEADERS+=$(public_headers)
 endif
 
-EXTRA_DIST=$(public_headers)
