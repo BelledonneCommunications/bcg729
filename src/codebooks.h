@@ -57,5 +57,5 @@ extern word16_t lowBandFilter[NB_LSP_COEFF+3];
 
 /* codebook for LP Analysis */
 extern word16_t wlp[L_LP_ANALYSIS_WINDOW];
-extern word16_t wlag[NB_LSP_COEFF+1];
+extern word16_t wlag[NB_LSP_COEFF+3];
 #endif /* ifndef CODEBOOKS_H */
