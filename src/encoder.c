@@ -148,7 +148,7 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int
 
 	/* use the whole signal Buffer for windowing and autocorrelation */
 	/* autoCorrelation Coefficients are computed and used internally, in case of VAD we must compute and retrieve 13 coefficients, compute only 11 when VAD is disabled */
-	computeLP(encoderChannelContext->signalBuffer, LPCoefficients, reflectionCoefficients, autoCorrelationCoefficients, noLagAutoCorrelationCoefficients, &autoCorrelationCoefficientsScale, (encoderChannelContext->VADChannelContext != NULL)?NB_LSP_COEFF+3:NB_LSP_COEFF+1);
+	computeLP(encoderChannelContext->signalBuffer, LPCoefficients, reflectionCoefficients, autoCorrelationCoefficients, noLagAutoCorrelationCoefficients, &autoCorrelationCoefficientsScale, (encoderChannelContext->VADChannelContext != NULL)?(NB_LSP_COEFF+3):(NB_LSP_COEFF+1));
 	/*** compute LSP: it might fail, get the previous one in this case ***/
 	if (!LP2LSPConversion(LPCoefficients, LSPCoefficients)) {
 		/* unable to find the 10 roots repeat previous LSP */

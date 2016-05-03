@@ -202,6 +202,11 @@ void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[], word32_t reflect
 	}
 
 	/* apply lag window on the autocorrelation coefficients spec 3.2.1 eq7 */
+	/* this check shall be useless but it makes some compiler happy */
+	if (autoCorrelationCoefficientsNumber>NB_LSP_COEFF+3) {
+		autoCorrelationCoefficientsNumber = NB_LSP_COEFF+3;
+	}
+
 	for (i=1; i<autoCorrelationCoefficientsNumber; i++) {
 		autoCorrelationCoefficients[i] = MULT16_32_P15(wlag[i], autoCorrelationCoefficients[i]); /* wlag in Q15 */
 		//autoCorrelationCoefficients[i] = MULT32_32_Q31(wlag[i], autoCorrelationCoefficients[i]); /* wlag in Q31 */
