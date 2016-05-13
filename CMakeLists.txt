@@ -88,27 +88,29 @@ if(ENABLE_TESTS)
 endif()
 
 
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-	VERSION ${PACKAGE_VERSION}
-	COMPATIBILITY AnyNewerVersion
-)
-export(EXPORT Bcg729Targets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
-)
-configure_file(Bcg729Config.cmake
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
-	COPYONLY
-)
+if (NOT ENABLE_MSPLUGIN)
+	include(CMakePackageConfigHelpers)
+	write_basic_package_version_file(
+		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+		VERSION ${PACKAGE_VERSION}
+		COMPATIBILITY AnyNewerVersion
+	)
+	export(EXPORT Bcg729Targets
+		FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
+	)
+	configure_file(Bcg729Config.cmake
+		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+		COPYONLY
+	)
 
-set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
-install(EXPORT Bcg729Targets
-	FILE Bcg729Targets.cmake
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
-install(FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
+	set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
+	install(EXPORT Bcg729Targets
+		FILE Bcg729Targets.cmake
+		DESTINATION ${CONFIG_PACKAGE_LOCATION}
+	)
+	install(FILES
+		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+		DESTINATION ${CONFIG_PACKAGE_LOCATION}
+	)
+endif()
