@@ -8,7 +8,7 @@ AC_CANONICAL_SYSTEM
 AC_PREREQ(2.63)
 AC_CONFIG_SRCDIR([src/encoder.c])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([tar-ustar --warnings=no-portability])
+AM_INIT_AUTOMAKE([tar-ustar --warnings=no-portability subdir-objects])
 LT_INIT
 AC_PROG_CC
 AC_CONFIG_HEADERS(config.h)
