@@ -1,4 +1,4 @@
-bcg729  is an opensource implementation of both encoder and decoder of the ITU G729 Annex A speech codec. 
+bcg729  is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec. 
 The library written in C 99 is fully portable and can be executed  on many platforms including both ARM  processor and x86. 
 libbcg729 supports concurrent channels encoding/decoding for multi call application such conferencing. 
 This project was initially developed as part of  Mediastreamer2, the Linphone's  media processing engine. So it also contains the glue to be integrated in Linphone/Mediastreamer2.
