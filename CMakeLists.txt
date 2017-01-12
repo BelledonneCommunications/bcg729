@@ -84,7 +84,7 @@ if(ENABLE_MSPLUGIN)
 	add_subdirectory(msbcg729)
 endif()
 if(ENABLE_TESTS)
-	#add_subdirectory(test)
+	add_subdirectory(test)
 endif()
 
 
