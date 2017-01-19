@@ -1,16 +1,26 @@
-bcg729  is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec. 
-The library written in C 99 is fully portable and can be executed  on many platforms including both ARM  processor and x86. 
-libbcg729 supports concurrent channels encoding/decoding for multi call application such conferencing. 
-This project was initially developed as part of  Mediastreamer2, the Linphone's  media processing engine. So it also contains the glue to be integrated in Linphone/Mediastreamer2.
+# About bcg729
+
+Bcg729 is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec. 
+
+The library written in C 99 is fully portable and can be executed on many platforms including both ARM and x86 processors. 
+libbcg729 supports concurrent channels encoding/decoding for multi call application such as conferencing. 
+This project was initially developed as part of Mediastreamer2, the Linphone's media processing engine.
+This is why it also contains the glue to be integrated in Linphone/Mediastreamer2.
  
-Licensing: The source code is licensed under GPLv2. ITU G729 Annex A/B were offically realesed October/November 1996 (https://www.itu.int/rec/T-REC-G.729) all pattents covering these specifications shall have expired in November 2016.
+# Licensing
+
+The source code is licensed under GPLv2. ITU G729 Annex A/B were offically released October/November 1996 (https://www.itu.int/rec/T-REC-G.729),
+hence all patents covering these specifications shall have expired in November 2016.
+
+# Compilation
 
 By default, the upstream package installs into /usr/local.  Please use
 './configure --prefix' to change it
 
-Linphone plugin is compile if both mediastremer2 and ortp are installed
+Linphone plugin is compiled if both mediastremer2 and ortp are installed.
  
-# Tests suite:
+# Tests suite
+
 - Tests are defined for each functional bloc (more or less matching a source file)
 and for global encoding/decoding
 
