@@ -25,6 +25,8 @@ if test -d /opt/local/share/aclocal ; then
 	ACLOCAL_ARGS="-I /opt/local/share/aclocal"
 fi
 
+ln -s README.md README
+
 echo "Generating build scripts for G729 codec..."
 set -x
 $LIBTOOLIZE --copy --force
