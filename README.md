@@ -11,6 +11,7 @@ This is why it also contains the glue to be integrated in Linphone/Mediastreamer
 
 The source code is licensed under GPLv2. ITU G729 Annex A/B were offically released October/November 1996 (https://www.itu.int/rec/T-REC-G.729),
 hence all patents covering these specifications shall have expired in November 2016.
+Patent pool administrator confirmed most licensed patents under the G.729 Consortium have expired (http://www.sipro.com/G729.html).
 
 # Compilation
 
