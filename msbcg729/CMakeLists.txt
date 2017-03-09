@@ -30,7 +30,7 @@ include_directories(${MEDIASTREAMER2_INCLUDE_DIRS})
 if(ENABLE_STATIC)
 	add_library(msbcg729-static STATIC ${BCG729_SOURCE_FILES} ${SOURCE_FILES})
 	set_target_properties(msbcg729-static PROPERTIES OUTPUT_NAME msbcg729)
-	target_link_libraries(msbcg729-static ${MEDIASTREAMER2_LIBRARIES})
+	target_link_libraries(msbcg729-static ${MEDIASTREAMER2_LIBRARIES} ${ORTP_LIBRARIES})
 	install(TARGETS msbcg729-static
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/mediastreamer/plugins
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -39,7 +39,7 @@ endif()
 if(ENABLE_SHARED)
 	add_library(msbcg729 MODULE ${BCG729_SOURCE_FILES} ${SOURCE_FILES})
 	set_target_properties(msbcg729 PROPERTIES SOVERSION 0)
-	target_link_libraries(msbcg729 ${MEDIASTREAMER2_LIBRARIES})
+	target_link_libraries(msbcg729 ${MEDIASTREAMER2_LIBRARIES} ${ORTP_LIBRARIES})
 	if(MSVC)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 			install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/libmsbcg729.pdb
