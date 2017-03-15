@@ -85,7 +85,7 @@ add_subdirectory(src)
 if(ENABLE_MSPLUGIN)
 	add_subdirectory(msbcg729)
 endif()
-if(ENABLE_TESTS)
+if(ENABLE_TESTS AND NOT ENABLE_MSPLUGIN)
 	add_subdirectory(test)
 endif()
 
