@@ -24,9 +24,17 @@
 typedef struct bcg729EncoderChannelContextStruct_struct bcg729EncoderChannelContextStruct;
 
 #ifdef _WIN32
-#define BCG729_VISIBILITY
+	#ifdef BCG729_STATIC
+		#define BCG729_VISIBILITY
+	#else
+		#ifdef BCG729_EXPORTS
+			#define BCG729_VISIBILITY __declspec(dllexport)
+		#else
+			#define BCG729_VISIBILITY __declspec(dllimport)
+		#endif
+	#endif
 #else
-#define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
+	#define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
 #endif
 
 /*****************************************************************************/

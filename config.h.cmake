@@ -28,3 +28,5 @@
 #cmakedefine PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
 #cmakedefine PACKAGE_URL "@PACKAGE_URL@"
 #cmakedefine VERSION "@VERSION@"
+
+#cmakedefine BCG729_STATIC

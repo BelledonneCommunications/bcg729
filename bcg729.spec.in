@@ -2,7 +2,7 @@
 
 ## rpmbuild options
 
-Summary:	Bcg729 codec plugin for mediastreamer2
+Summary:	Bcg729 codec implementation
 Name:	bcg729
 Version:	1.0
 Release:	1
@@ -14,7 +14,7 @@ Source0: 	%{name}-%{version}.tar.gz
 Requires: bash >= 2.0
 
 %description
-BCG729 codec plugin for mediastreamer2.
+BCG729 codec implementation.
 
 %package devel
 Summary:       Development libraries for bcg729
@@ -22,7 +22,7 @@ Group:         Development/Libraries
 Requires:      %{name} = %{version}-%{release}
 
 %description devel
-BCG729 codec plugin for mediastreamer2.
+BCG729 codec implementation.
 
 %prep
 %setup -q

@@ -23,8 +23,7 @@ Compilation
 
 ### Dependencies
 
-If you want build bcg729 as Mediastreamer's plugin, you need to have *Mediastreamer[1]* installed on your system.
-Otherwise, no dependency is requested.
+No dependency is requested.
 
 
 ### Build procedure
@@ -44,7 +43,6 @@ Building by Autotools way is deprecated. Use [CMake][cmake-website] to configure
 * `ENABLE_SHARED=NO`              : do not build the shared library
 * `ENABLE_STATIC=NO`              : do not build the static library
 * `ENABLE_TESTS=NO`               : do not build non-regression tests
-* `ENABLE_MSPLUGIN=NO`            : do not build the Mediastreamer plugin version
 
 
 ### Note for packagers
@@ -71,9 +69,6 @@ Tests suite
 
 
 ---------------------------------------
-
-
-[1] Mediastreamer2: git://git.linphone.org/mediastreamer2.git *or* <http://www.linphone.org/releases/sources/mediastreamer>
 
 
 [bcg729-patern]: http://www.belledonne-communications.com/downloads/bcg729-patterns.zip

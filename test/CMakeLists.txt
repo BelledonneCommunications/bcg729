@@ -19,11 +19,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-if(NOT ENABLE_MSPLUGIN)
-	set(BCG729_LIBRARY bcg729)
-else()
-	set(BCG729_LIBRARY msbcg729)
-endif()
+
+set(BCG729_LIBRARY bcg729)
 
 set(UTIL_SRC src/testUtils.c  src/testUtils.h)
 

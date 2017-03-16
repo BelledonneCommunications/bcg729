@@ -24,9 +24,17 @@ typedef struct bcg729DecoderChannelContextStruct_struct bcg729DecoderChannelCont
 #include <stdint.h>
 
 #ifdef _WIN32
-#define BCG729_VISIBILITY
+	#ifdef BCG729_STATIC
+		#define BCG729_VISIBILITY
+	#else
+		#ifdef BCG729_EXPORTS
+			#define BCG729_VISIBILITY __declspec(dllexport)
+		#else
+			#define BCG729_VISIBILITY __declspec(dllimport)
+		#endif
+	#endif
 #else
-#define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
+	#define BCG729_VISIBILITY __attribute__ ((visibility ("default")))
 #endif
 
 /*****************************************************************************/
@@ -35,7 +43,7 @@ typedef struct bcg729DecoderChannelContextStruct_struct bcg729DecoderChannelCont
 /*      - the decoder channel context data                                   */
 /*                                                                           */
 /*****************************************************************************/
-BCG729_VISIBILITY bcg729DecoderChannelContextStruct *initBcg729DecoderChannel();
+BCG729_VISIBILITY bcg729DecoderChannelContextStruct *initBcg729DecoderChannel(void);
 
 /*****************************************************************************/
 /* closeBcg729DecoderChannel : free memory of context structure              */

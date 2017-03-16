@@ -1,6 +1,6 @@
 ############################################################################
-# Bcg729Config.cmake
-# Copyright (C) 2015  Belledonne Communications, Grenoble France
+# CMakeLists.txt
+# Copyright (C) 2017  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -19,17 +19,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-#
-# Config file for the bcg729 package.
-# It defines the following variables:
-#
-#  BCG729_FOUND - system has bcg729
-#  BCG729_INCLUDE_DIRS - the bcg729 include directory
-#  BCG729_LIBRARIES - The libraries needed to use bcg729
 
-include("${CMAKE_CURRENT_LIST_DIR}/Bcg729Targets.cmake")
+set(HEADER_FILES
+	decoder.h
+	encoder.h
+)
 
-get_filename_component(BCG729_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-set(BCG729_INCLUDE_DIRS "${BCG729_CMAKE_DIR}/../../../include")
-set(BCG729_LIBRARIES bcg729)
-set(BCG729_FOUND 1)
+set(BCG729_HEADER_FILES )
+foreach(HEADER_FILE ${HEADER_FILES})
+	list(APPEND BCG729_HEADER_FILES "${CMAKE_CURRENT_LIST_DIR}/bcg729/${HEADER_FILE}")
+endforeach()
+set(BCG729_HEADER_FILES ${BCG729_HEADER_FILES} PARENT_SCOPE)
+
+install(FILES ${BCG729_HEADER_FILES}
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bcg729
+	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)

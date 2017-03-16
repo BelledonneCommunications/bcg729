@@ -24,38 +24,11 @@ AC_ARG_ENABLE([tests],
 	AS_HELP_STRING([--disable-tests], [Disable the tests]))
 	AM_CONDITIONAL([RUN_TESTS], [test "x$enable_tests" != "xno"])
 
-dnl configure option to disable mediastreamer plugin
-AC_ARG_ENABLE([msplugin],
-	AS_HELP_STRING([--disable-msplugin], [Disable the mediastreamer plugin]),
-	enable_msplugin="$enableval",
-	enable_msplugin="yes"
-)
-
 CFLAGS="$CFLAGS -Wall"
 
 if test $GCC = yes && test $wall_werror = yes;  then
 	CFLAGS="$CFLAGS -Werror "
 fi
-
-dnl check for libraries that have pkg-config files installed
-PKG_CHECK_MODULES(ORTP, ortp >= 0.21.0,[found_ortp=true],foo=bar)
-PKG_CHECK_MODULES(MEDIASTREAMER, mediastreamer >= 2.8.99,[found_ms2=true],foo=bar)
-
-if test x${found_ms2}x${found_ortp}x${enable_msplugin} = xtruextruexyes ; then
-	build_msbcg729=true
-else
-	ORTP_CFLAGS=
-	ORTP_LIBS=
-	MEDIASTREAMER_CFLAGS=
-	MEDIASTREAMER_LIBS=
-fi
-
-AC_SUBST(ORTP_CFLAGS)
-AC_SUBST(ORTP_LIBS)
-AC_SUBST(MEDIASTREAMER_CFLAGS)
-AC_SUBST(MEDIASTREAMER_LIBS)
-
-AM_CONDITIONAL(BUILD_MSBCG729, test x$build_msbcg729 = xtrue)
 
 VISIBILITY_CFLAGS=
 case "$target_os" in
@@ -88,7 +61,6 @@ AC_CONFIG_FILES([
 	src/Makefile
 	include/Makefile
 	include/bcg729/Makefile
-	msbcg729/Makefile
 	test/Makefile
 	test/bin/Makefile
 	libbcg729.pc

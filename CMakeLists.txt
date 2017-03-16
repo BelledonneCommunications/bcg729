@@ -37,27 +37,8 @@ set(VERSION "${PACKAGE_VERSION}")
 option(ENABLE_SHARED "Build shared library." YES)
 option(ENABLE_STATIC "Build static library." YES)
 option(ENABLE_TESTS "Enable compilation of the tests." NO)
-option(ENABLE_MSPLUGIN "Enable compilation of the mediastreamer2 plugin." YES)
 
 include(GNUInstallDirs)
-
-if(ENABLE_MSPLUGIN)
-	if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
-		include("${EP_ms2_CONFIG_DIR}/Mediastreamer2Config.cmake")
-		include("${EP_ortp_CONFIG_DIR}/ORTPConfig.cmake")
-	else()
-		find_package(Mediastreamer2)
-		find_package(ORTP)
-	endif()
-
-	if(NOT MEDIASTREAMER2_FOUND)
-		message(WARNING "Could not find the mediastreamer2 libraries!")
-		set(ENABLE_MSPLUGIN OFF CACHE BOOL "Enable compilation of the mediastreamer2 plugin." FORCE)
-	endif()
-endif()
-
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 
 include_directories(
@@ -71,6 +52,12 @@ if(MSVC)
 	include_directories(${MSVC_INCLUDE_DIR})
 endif()
 
+set(BCG729_CPPFLAGS )
+if(ENABLE_STATIC)
+	set(BCG729_STATIC 1)
+	list(APPEND BCG729_CPPFLAGS "-DBCG729_STATIC")
+endif()
+
 add_definitions(-DHAVE_CONFIG_H)
 if(MSVC)
 	add_definitions("/W3")
@@ -81,41 +68,39 @@ else()
 	endif()
 endif()
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+add_subdirectory(include)
 add_subdirectory(src)
-if(ENABLE_MSPLUGIN)
-	add_subdirectory(msbcg729)
-endif()
-if(ENABLE_TESTS AND NOT ENABLE_MSPLUGIN)
+if(ENABLE_TESTS)
 	add_subdirectory(test)
 endif()
 
 
-if (NOT ENABLE_MSPLUGIN)
-	include(CMakePackageConfigHelpers)
-	write_basic_package_version_file(
-		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-		VERSION ${PACKAGE_VERSION}
-		COMPATIBILITY AnyNewerVersion
-	)
-	export(EXPORT Bcg729Targets
-		FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
-	)
-	configure_file(Bcg729Config.cmake
-		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
-		COPYONLY
-	)
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+	VERSION ${PACKAGE_VERSION}
+	COMPATIBILITY AnyNewerVersion
+)
+export(EXPORT Bcg729Targets
+	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
+)
+configure_file(Bcg729Config.cmake.in
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+	@ONLY
+)
 
-	set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
-	install(EXPORT Bcg729Targets
-		FILE Bcg729Targets.cmake
-		DESTINATION ${CONFIG_PACKAGE_LOCATION}
-	)
-	install(FILES
-		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
-		"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-		DESTINATION ${CONFIG_PACKAGE_LOCATION}
-	)
-endif()
+set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
+install(EXPORT Bcg729Targets
+	FILE Bcg729Targets.cmake
+	DESTINATION ${CONFIG_PACKAGE_LOCATION}
+)
+install(FILES
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+	DESTINATION ${CONFIG_PACKAGE_LOCATION}
+)
 
 # CPack settings
 set(CPACK_PACKAGE_NAME "bcg729")
