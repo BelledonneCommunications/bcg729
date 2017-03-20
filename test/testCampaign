@@ -26,7 +26,7 @@ use Term::ANSIColor;
 # Tune the defaultMaxDiff associative array definition to modify
 # the behavior of this script for any functional bloc under test
 
-my $binDirectory = "./bin/";
+my $binDirectory = "./";
 my $patternDirectory = "./patterns";
 # softDiff: compare two CSV files with a margin of acceptance between the values found
 # arguments : file1, file2, maximumDiff tolerated(value), maximum percentage abs((val1-val2)/val1)*100 tolerated
