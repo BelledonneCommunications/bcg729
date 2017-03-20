@@ -29,4 +29,4 @@ if [ ! -d "patterns" ]; then
 fi
 
 # run all the tests
-./testCampaign all 
+@CMAKE_CURRENT_BINARY_DIR@/testCampaign all 
