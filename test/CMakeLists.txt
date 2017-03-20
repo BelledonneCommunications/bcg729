@@ -106,6 +106,6 @@ add_executable(encoderVADTest src/encoderVADTest.c ${UTIL_SRC})
 target_link_libraries(encoderVADTest ${BCG729_LIBRARY})
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/testCampaign.cmake DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ )
-file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/testCampaign ${CMAKE_CURRENT_BINARY_DIR}/testCampaign )
+file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/testCampaign.cmake ${CMAKE_CURRENT_BINARY_DIR}/testCampaign )
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testCampaignAll.cmake ${CMAKE_CURRENT_BINARY_DIR}/testCampaignAll)
 
