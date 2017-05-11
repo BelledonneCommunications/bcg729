@@ -62,7 +62,6 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	word16_t *residualSignal;
 	word16_t *scaledResidualSignal;
 	word32_t correlationMax = (word32_t)MININT32;
-	int16_t intPitchDelayMax;
 	int16_t bestIntPitchDelay = 0;
 	word16_t *delayedResidualSignal;
 	word32_t residualSignalEnergy = 0; /* in Q-4 */
@@ -113,12 +112,11 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 
 	/*** Compute the maximum correlation on scaledResidualSignal delayed by intPitchDelay +/- 3 to get the best delay. Spec 4.2.1 eq80 ***/
 	/* using a scaled(Q-2) signals gives correlation in Q-4. */
-	intPitchDelayMax = intPitchDelay+3; /* intPitchDelayMax shall be < MAXIMUM_INT_PITCH_DELAY(143) */
-	if (intPitchDelayMax>MAXIMUM_INT_PITCH_DELAY) {
-		intPitchDelayMax = MAXIMUM_INT_PITCH_DELAY;
+	if (intPitchDelay>MAXIMUM_INT_PITCH_DELAY-3) { /* intPitchDelay shall be < MAXIMUM_INT_PITCH_DELAY-3 (140) */
+		intPitchDelay = MAXIMUM_INT_PITCH_DELAY-3;
 	}
 
-	for (i=intPitchDelay-3; i<=intPitchDelayMax; i++) {
+	for (i=intPitchDelay-3; i<=intPitchDelay+3; i++) {
 		word32_t correlation = 0;
 		delayedResidualSignal = &(scaledResidualSignal[-i]); /* delayedResidualSignal points to scaledResidualSignal[-i] */
 		
