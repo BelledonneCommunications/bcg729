@@ -95,8 +95,8 @@ void computeqLSF(word16_t *codebookqLSF, word16_t previousLCodeWord[MA_MAX_K][NB
 	insertionSort(codebookqLSF, NB_LSP_COEFF);
 
 	/* check for low limit on qLSF[0] */
-	if (codebookqLSF[1]<qLSF_MIN) {
-		codebookqLSF[1] = qLSF_MIN;
+	if (codebookqLSF[0]<qLSF_MIN) {
+		codebookqLSF[0] = qLSF_MIN;
 	}
 
 	/* check and rectify minimum distance between two consecutive qLSF */
