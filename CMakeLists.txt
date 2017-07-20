@@ -21,7 +21,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.0)
-project(bcg729 VERSION 1.0.3 LANGUAGES C)
+project(bcg729 VERSION 1.0.4 LANGUAGES C)
 
 
 set(PACKAGE "${PROJECT_NAME}")
