@@ -10,7 +10,7 @@ if [ ! -d "patterns" ]; then
    wget http://www.belledonne-communications.com/downloads/bcg729-patterns.zip
    if [ -e bcg729-patterns.zip ]; then
 	# check file
-	if [[ `openssl md5 bcg729-patterns.zip | grep -c a8a998f6838b052d05ba06d02b8612a1` -ne 0 ]]; then
+	if [[ `openssl md5 bcg729-patterns.zip | grep -c ee5702e17cff8484d1396e6f23f84305` -ne 0 ]]; then
 		# file ok, unzip it
 		unzip bcg729-patterns.zip
 	   	if [[ $? -ne 0 ]]; then
