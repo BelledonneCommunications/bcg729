@@ -1,3 +1,5 @@
+[![pipeline status](https://gitlab.linphone.org/BC/public/bcg729/badges/master/pipeline.svg)](https://gitlab.linphone.org/BC/public/bcg729/commits/master)
+
 Bcg729
 ======
 
