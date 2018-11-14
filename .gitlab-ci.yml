@@ -4,6 +4,6 @@ job1:
   script:
     - mkdir -p build-bcg729
     - cd build-bcg729
-    - cmake . -DENABLE_TESTS=YES
+    - cmake .. -DENABLE_TESTS=YES
     - make
     - make install
