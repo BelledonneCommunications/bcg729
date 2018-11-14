@@ -1,4 +1,4 @@
-job-common:
+job1:
 script:
     - cmake . -DENABLE_TESTS=YES
     - make
