@@ -1,8 +1,5 @@
-.job-common: &job-common-definition
-
-  tags: [ "docker" ]
-
-  script:
+job-common:
+script:
     - cmake . -DENABLE_TESTS=YES
     - make
     - make install
