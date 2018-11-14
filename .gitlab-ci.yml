@@ -1,5 +1,5 @@
 job1:
-script:
+  script:
     - cmake . -DENABLE_TESTS=YES
     - make
     - make install
