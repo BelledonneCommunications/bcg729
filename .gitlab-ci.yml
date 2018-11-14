@@ -1,6 +1,6 @@
 job1:
   tags: [ "docker" ]
-  image: gitlab.linphone.org:4567/bc/public/bcg729/bc-dev-debian:9
+  image: bc-dev-debian:9
   script:
     - cmake . -DENABLE_TESTS=YES
     - make
