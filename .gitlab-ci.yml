@@ -15,7 +15,7 @@ job1:
   cache:
     untracked: true
     paths:
-      - ./*
+      - .*
     
 job2:
   stage: test
