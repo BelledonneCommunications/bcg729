@@ -22,7 +22,7 @@ test:
   tags: [ "docker" ]
   script:
     - ls -la
-    - cd test
+    - cd build-bcg729/test
     - ls -la
     #- ./testCampaignAll
   dependencies:
