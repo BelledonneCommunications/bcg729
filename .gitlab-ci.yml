@@ -2,7 +2,7 @@ job1:
   tags: [ "docker" ]
   image: gitlab.linphone.org:4567/bc/public/linphone-sdk/bc-dev-debian:9
   before_script: 
-    - sudo apt-get install wget
+    - sudo apt-get install wget unzip
   script:
     - mkdir -p build-bcg729
     - cd build-bcg729
