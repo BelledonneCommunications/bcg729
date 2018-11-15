@@ -15,7 +15,7 @@ build:
     - ls -la test
   artifacts:
     paths:
-      - test/*
+      - build-bcg729/test/*
     
 test:
   stage: test
