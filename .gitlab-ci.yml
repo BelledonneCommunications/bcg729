@@ -15,6 +15,7 @@ job1:
     
 job2:
   stage: test
+  tags: [ "docker" ]
   script:
     - cd test
     - ./testCampaignAll
