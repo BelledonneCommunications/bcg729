@@ -4,7 +4,7 @@ before_script:
 stages:
   - build
   - test
-job1:
+build:
   stage: build
   tags: [ "docker" ]
   script:
@@ -13,12 +13,11 @@ job1:
     - cmake .. -DENABLE_TESTS=YES
     - make
     - ls -la test
-  cache:
-    untracked: true
+  artifacts:
     paths:
-      - .*
+      - ./*
     
-job2:
+test:
   stage: test
   tags: [ "docker" ]
   script:
@@ -26,3 +25,5 @@ job2:
     - cd test
     - ls -la
     #- ./testCampaignAll
+  dependencies:
+    - build
