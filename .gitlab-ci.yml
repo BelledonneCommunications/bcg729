@@ -14,9 +14,8 @@ build:
     - make
     - ls -la test
   artifacts:
-    untracked: true
     paths:
-      - test/
+      - test/*
     
 test:
   stage: test
