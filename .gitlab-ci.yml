@@ -2,17 +2,9 @@ job1:
   tags: [ "docker" ]
   image: gitlab.linphone.org:4567/bc/public/linphone-sdk/bc-dev-debian:9
   script:
-    - RUN apt-get update && \
-      apt-get -y install sudo
-
-    - RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
-
-    - USER docker
-    - CMD /bin/bash
-    
     - mkdir -p build-bcg729
     - cd build-bcg729
-    - cmake .. -DENABLE_TESTS=YES
+    - cmake .. -DCMAKE_INSTALL_PREFIX=~ -DENABLE_TESTS=YES
     - make
     - make install
 
