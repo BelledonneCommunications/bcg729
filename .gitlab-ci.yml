@@ -13,6 +13,7 @@ job1:
     - cmake .. -DENABLE_TESTS=YES
     - make
   cache:
+    untracked: true
     paths:
       - ./*
     
