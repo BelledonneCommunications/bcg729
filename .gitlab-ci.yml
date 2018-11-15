@@ -12,6 +12,7 @@ job1:
     - cd build-bcg729
     - cmake .. -DENABLE_TESTS=YES
     - make
+    - ls -la test
   cache:
     untracked: true
     paths:
