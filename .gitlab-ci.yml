@@ -12,9 +12,9 @@ job1:
     - cd build-bcg729
     - cmake .. -DENABLE_TESTS=YES
     - make
-    cache:
-      paths:
-        - ./*
+  cache:
+    paths:
+      - ./*
     
 job2:
   stage: test
