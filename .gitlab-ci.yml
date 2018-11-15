@@ -16,7 +16,7 @@ build:
   artifacts:
     untracked: true
     paths:
-      - ./*
+      - test/
     
 test:
   stage: test
