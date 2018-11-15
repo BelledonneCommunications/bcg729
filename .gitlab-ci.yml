@@ -7,5 +7,7 @@ job1:
     - cmake .. -DCMAKE_INSTALL_PREFIX=~ -DENABLE_TESTS=YES
     - make
     - make install
+    - cd test
+    - cmake testCampaignAll
 
 
