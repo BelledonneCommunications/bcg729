@@ -7,7 +7,7 @@ job1:
     #- cmake .. -DENABLE_TESTS=YES
     #- make
     #- make install
-    cd /usr/
-    ls -la
-    cd share
-    ls -la
+    - cd /usr/
+    - ls -la
+    - cd share
+    - ls -la
