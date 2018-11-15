@@ -8,6 +8,6 @@ job1:
     - make
     - make install
     - cd test
-    - cmake testCampaignAll
+    - testCampaignAll
 
 
