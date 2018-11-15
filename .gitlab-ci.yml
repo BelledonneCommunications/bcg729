@@ -1,14 +1,20 @@
-job1:
-  tags: [ "docker" ]
-  image: gitlab.linphone.org:4567/bc/public/linphone-sdk/bc-dev-debian:9
-  before_script: 
+image: gitlab.linphone.org:4567/bc/public/linphone-sdk/bc-dev-debian:9
+before_script: 
     - sudo apt-get install wget unzip
+stages:
+  - build
+  - test
+job1:
+  stage: build
+  tags: [ "docker" ]
   script:
     - mkdir -p build-bcg729
     - cd build-bcg729
     - cmake .. -DENABLE_TESTS=YES
     - make
+    
+job2:
+  stage: test
+  script:
     - cd test
     - ./testCampaignAll
-
-
