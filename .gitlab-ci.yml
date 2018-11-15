@@ -14,9 +14,9 @@ build:
     - make
     - ls -la test
   artifacts:
-    untracked: true
-    #paths:
-    #  - build-bcg729/*
+    #untracked: true
+    paths:
+      - build-bcg729/test/*
     
 test:
   stage: test
