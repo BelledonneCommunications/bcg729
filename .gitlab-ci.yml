@@ -15,15 +15,13 @@ build:
     - ls -la test
   artifacts:
     paths:
-      - build-bcg729/test/*
+      - build-bcg729/*
     
 test:
   stage: test
   tags: [ "docker" ]
   script:
-    - ls -la
     - cd build-bcg729/test
-    - ls -la
-    #- ./testCampaignAll
+    - ./testCampaignAll
   dependencies:
     - build
