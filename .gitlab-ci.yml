@@ -1,17 +1,16 @@
 image: gitlab.linphone.org:4567/bc/public/linphone-sdk/bc-dev-debian:9
-before_script: 
-    - sudo apt-get install wget unzip
 stages:
   - build
   - test
 build:
   stage: build
-  tags: [ "docker" ]
+  tags: [ "docker" ] #needed for the stage to be runned
   script:
     - mkdir -p build-bcg729
     - cd build-bcg729
     - cmake .. -DENABLE_TESTS=YES
     - make
+  #uploading the artifacts for the next stage    
   artifacts:
     paths:
       - build-bcg729/test/*
@@ -20,6 +19,11 @@ build:
 test:
   stage: test
   tags: [ "docker" ]
+  
+  #ugly... It's better to use a proper docker image for this istead of 
+  #installing each time the container is run
+  before_script: 
+    - sudo apt-get install wget unzip
   script:
     - cd build-bcg729/test
     - ./testCampaignAll
