@@ -17,6 +17,9 @@ build:
       - build-bcg729/src/libbcg729.so.0
     
 test:
+  variables:
+    GIT_STRATEGY: none
+    GIT_CHECKOUT: "false"
   stage: test
   tags: [ "docker" ]
   
