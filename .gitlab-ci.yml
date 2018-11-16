@@ -12,11 +12,10 @@ build:
     - cd build-bcg729
     - cmake .. -DENABLE_TESTS=YES
     - make
-    - find -name libbcg729.so.0
   artifacts:
-    #untracked: true
     paths:
       - build-bcg729/test/*
+      - build-bcg729/src/libbcg729.so.0
     
 test:
   stage: test
