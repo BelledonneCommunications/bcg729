@@ -16,7 +16,7 @@
 Name:           @CPACK_PACKAGE_NAME@
 Version:        @PROJECT_VERSION@
 Release:        %{build_number}%{?dist}
-Summary:        Bcg729 is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec. 
+Summary:        Bcg729 is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec.
 
 Group:          Applications/Communications
 License:        GPL
@@ -28,10 +28,10 @@ Requires:	%{pkg_prefix}bctoolbox
 
 %description
 
-Bcg729 is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec. 
+Bcg729 is an opensource implementation of both encoder and decoder of the ITU G729 Annex A/B speech codec.
 
-The library written in C 99 is fully portable and can be executed on many platforms including both ARM and x86 processors. 
-libbcg729 supports concurrent channels encoding/decoding for multi call application such as conferencing. 
+The library written in C 99 is fully portable and can be executed on many platforms including both ARM and x86 processors.
+libbcg729 supports concurrent channels encoding/decoding for multi call application such as conferencing.
 This project was initially developed as part of Mediastreamer2, the Linphone's media processing engine.
 This is why it also contains the glue to be integrated in Linphone/Mediastreamer2.
 
@@ -60,7 +60,7 @@ Libraries and headers required to develop software with bcg729
 %setup -n %{name}-%{version}
 
 %build
-%{expand:%%%cmake_name} . -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@ -DCMAKE_INSTALL_LIBDIR:PATH=%{_libdir} -DCMAKE_PREFIX_PATH:PATH=%{_prefix}
+%{expand:%%%cmake_name} . -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@ -DCMAKE_PREFIX_PATH:PATH=%{_prefix}
 make %{?_smp_mflags}
 
 %install
@@ -90,3 +90,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/Bcg729/cmake/Bcg729Config*.cmake
 %{_datadir}/Bcg729/cmake/Bcg729Targets*.cmake
 
+%changelog
+
+* Tue Nov 27 2018 ronan.abhamon <ronan.abhamon@belledonne-communications.com>
+- Do not set CMAKE_INSTALL_LIBDIR and never with _libdir!
