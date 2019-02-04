@@ -66,6 +66,7 @@ else()
 	if (NOT IOS)
 		add_definitions("-Werror")
 	endif()
+	add_definitions("-fvisibility=hidden")
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
