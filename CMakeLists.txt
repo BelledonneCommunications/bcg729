@@ -92,6 +92,19 @@ configure_file(Bcg729Config.cmake.in
 	@ONLY
 )
 
+set(prefix "${CMAKE_INSTALL_PREFIX}")
+set(exec_prefix "\${prefix}")
+set(includedir  "\${prefix}/include")
+set(libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+configure_file(libbcg729.pc.in
+	"${CMAKE_CURRENT_BINARY_DIR}/libbcg729.pc"
+	@ONLY
+)
+install(FILES
+	"${CMAKE_CURRENT_BINARY_DIR}/libbcg729.pc"
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
+
 set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
 install(EXPORT Bcg729Targets
 	FILE Bcg729Targets.cmake
