@@ -66,7 +66,9 @@ else()
 	if (NOT IOS)
 		add_definitions("-Werror")
 	endif()
-	add_definitions("-fvisibility=hidden")
+	if(NOT ENABLE_TESTS) # test access inner functions so maintain visibility if we want to run tests
+		add_definitions("-fvisibility=hidden")
+	endif()
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
