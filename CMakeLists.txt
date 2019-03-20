@@ -66,6 +66,9 @@ else()
 	if (NOT IOS)
 		add_definitions("-Werror")
 	endif()
+	if(NOT ENABLE_TESTS) # test access inner functions so maintain visibility if we want to run tests
+		add_definitions("-fvisibility=hidden")
+	endif()
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
@@ -89,6 +92,19 @@ export(EXPORT Bcg729Targets
 configure_file(Bcg729Config.cmake.in
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
 	@ONLY
+)
+
+set(prefix "${CMAKE_INSTALL_PREFIX}")
+set(exec_prefix "\${prefix}")
+set(includedir  "\${prefix}/include")
+set(libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+configure_file(libbcg729.pc.in
+	"${CMAKE_CURRENT_BINARY_DIR}/libbcg729.pc"
+	@ONLY
+)
+install(FILES
+	"${CMAKE_CURRENT_BINARY_DIR}/libbcg729.pc"
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
 set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
