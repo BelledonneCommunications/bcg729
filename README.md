@@ -73,5 +73,5 @@ Tests suite
 ---------------------------------------
 
 
-[bcg729-patern]: http://www.belledonne-communications.com/downloads/bcg729-patterns.zip
+[bcg729-patern]: http://www.belledonne-communications.com/bc-downloads/bcg729-patterns.zip
 [cmake-website]: https://cmake.org/
