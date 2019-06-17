@@ -81,6 +81,7 @@ endif()
 
 
 include(CMakePackageConfigHelpers)
+set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
 write_basic_package_version_file(
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
 	VERSION ${PACKAGE_VERSION}
@@ -89,9 +90,9 @@ write_basic_package_version_file(
 export(EXPORT Bcg729Targets
 	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
 )
-configure_file(Bcg729Config.cmake.in
+configure_package_config_file(Bcg729Config.cmake.in
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
-	@ONLY
+	NO_SET_AND_CHECK_MACRO
 )
 
 set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -107,7 +108,6 @@ install(FILES
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
-set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
 install(EXPORT Bcg729Targets
 	FILE Bcg729Targets.cmake
 	DESTINATION ${CONFIG_PACKAGE_LOCATION}
