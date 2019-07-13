@@ -242,7 +242,7 @@ void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGe
 /*              used to compute the current qLSF                                           */
 /*                                                                                         */
 /*******************************************************************************************/
-void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t previousFrameIsActiveFlag, uint8_t *bitStream, uint8_t bitStreamLength, word16_t *excitationVector, word16_t *previousqLSP, word16_t *LP, uint16_t *pseudoRandomSeed, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t rfc3389PayloadFlag) {
+void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t previousFrameIsActiveFlag, const uint8_t *bitStream, uint8_t bitStreamLength, word16_t *excitationVector, word16_t *previousqLSP, word16_t *LP, uint16_t *pseudoRandomSeed, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t rfc3389PayloadFlag) {
 	int i;
 	word16_t interpolatedqLSP[NB_LSP_COEFF]; /* interpolated qLSP in Q0.15 */
 	/* if this is a SID frame, decode received parameters */

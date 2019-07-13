@@ -67,7 +67,7 @@ BCG729_VISIBILITY void closeBcg729EncoderChannel(bcg729EncoderChannelContextStru
 /*           if VAD/DTX is enabled                                           */
 /*                                                                           */
 /*****************************************************************************/
-BCG729_VISIBILITY void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[], uint8_t *bitStreamLength);
+BCG729_VISIBILITY void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, const int16_t inputFrame[], uint8_t bitStream[], uint8_t *bitStreamLength);
 
 /*****************************************************************************/
 /* bcg729GetRFC3389Payload : return the comfort noise payload according to   */

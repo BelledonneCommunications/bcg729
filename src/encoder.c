@@ -114,7 +114,7 @@ void closeBcg729EncoderChannel(bcg729EncoderChannelContextStruct *encoderChannel
 /*           on 80 bits (10 8bits words)                                     */
 /*                                                                           */
 /*****************************************************************************/
-void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, int16_t inputFrame[], uint8_t bitStream[], uint8_t *bitStreamLength)
+void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, const int16_t inputFrame[], uint8_t bitStream[], uint8_t *bitStreamLength)
 {
 	int i;
 	uint16_t parameters[NB_PARAMETERS]; /* the output parameters in an array */

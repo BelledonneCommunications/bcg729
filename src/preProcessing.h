@@ -33,5 +33,5 @@ void initPreProcessing(bcg729EncoderChannelContextStruct *encoderChannelContext)
 /*      -(o) preProcessedSignal : 80 values in Q0                            */
 /*                                                                           */
 /*****************************************************************************/
-void preProcessing(bcg729EncoderChannelContextStruct *encoderChannelContext, word16_t signal[], word16_t preProcessedSignal[]);
+void preProcessing(bcg729EncoderChannelContextStruct *encoderChannelContext, const word16_t signal[], word16_t preProcessedSignal[]);
 #endif /* ifndef PREPROCESSING_H */

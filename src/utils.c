@@ -347,7 +347,7 @@ void CNGparametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[]) {
 /*      -(o) parameters : 16 values parameters array                         */
 /*                                                                           */
 /*****************************************************************************/
-void parametersBitStream2Array(uint8_t bitStream[], uint16_t parameters[])
+void parametersBitStream2Array(const uint8_t bitStream[], uint16_t parameters[])
 {
 	parameters[0] = (bitStream[0]>>7)&(uint16_t)0x1;
 	parameters[1] = bitStream[0]&(uint16_t)0x7f;
