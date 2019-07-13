@@ -210,7 +210,7 @@ void CNGparametersArray2BitStream(uint16_t parameters[], uint8_t bitStream[]);
 /*      -(o) parameters : 16 values parameters array                         */
 /*                                                                           */
 /*****************************************************************************/
-void parametersBitStream2Array(uint8_t bitStream[], uint16_t parameters[]);
+void parametersBitStream2Array(const uint8_t bitStream[], uint16_t parameters[]);
 
 /*****************************************************************************/
 /* pseudoRandom : generate pseudo random number as in spec 4.4.4 eq96        */

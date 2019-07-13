@@ -67,5 +67,5 @@ BCG729_VISIBILITY void closeBcg729DecoderChannel(bcg729DecoderChannelContextStru
 /*      -(o) signal : a decoded frame 80 samples (16 bits PCM)               */
 /*                                                                           */
 /*****************************************************************************/
-BCG729_VISIBILITY void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t bitStreamLength, uint8_t frameErasureFlag, uint8_t SIDFrameFlag, uint8_t rfc3389PayloadFlag, int16_t signal[]);
+BCG729_VISIBILITY void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, const uint8_t bitStream[], uint8_t bitStreamLength, uint8_t frameErasureFlag, uint8_t SIDFrameFlag, uint8_t rfc3389PayloadFlag, int16_t signal[]);
 #endif /* ifndef DECODER_H */

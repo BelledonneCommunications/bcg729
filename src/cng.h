@@ -50,5 +50,5 @@ void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGe
 /*      -(i) rfc3389PayloadFlag: true when CN payload follow rfc3389                       */
 /*                                                                                         */
 /*******************************************************************************************/
-void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t previousFrameIsActiveFlag, uint8_t *bitStream, uint8_t bitStreamLength, word16_t *excitationVector, word16_t *previousqLSP, word16_t *LP, uint16_t *pseudoRandomSeed, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t rfc3389PayloadFlag);
+void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t previousFrameIsActiveFlag, const uint8_t *bitStream, uint8_t bitStreamLength, word16_t *excitationVector, word16_t *previousqLSP, word16_t *LP, uint16_t *pseudoRandomSeed, word16_t previousLCodeWord[MA_MAX_K][NB_LSP_COEFF], uint8_t rfc3389PayloadFlag);
 #endif /* ifndef CNG_H */
