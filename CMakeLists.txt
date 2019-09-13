@@ -92,6 +92,7 @@ export(EXPORT Bcg729Targets
 )
 configure_package_config_file(Bcg729Config.cmake.in
 	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
 	NO_SET_AND_CHECK_MACRO
 )
 
