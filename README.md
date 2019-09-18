@@ -10,13 +10,23 @@ Bcg729 is an opensource implementation of both encoder and decoder of the ITU G7
 
 The library written in C 99 is fully portable and can be executed on many platforms including both ARM and x86 processors. 
 libbcg729 supports concurrent channels encoding/decoding for multi call application such as conferencing. 
-This project was initially developed as part of Mediastreamer2, the Linphone's media processing engine.
-This is why it also contains the glue to be integrated in Linphone/Mediastreamer2.
+
+For more information, [please visit bcg729's homepage on **linphone.org**](https://linphone.org/technical-corner/bcg729).
  
 Licensing
 ---------
 
-The source code is licensed under GPLv2. ITU G729 Annex A/B were offically released October/November 1996 (https://www.itu.int/rec/T-REC-G.729),
+Copyright 2012-2019 Belledonne Communications SARL.
+
+bcg729 is dual licensed. It can be licensed and distributed:
+
+* Under a GNU GPLv3 license, for free (open source)
+* Under a proprietary license, for use in closed source applications.
+
+Patents
+-------
+
+ITU G729 Annex A/B were offically released October/November 1996 (https://www.itu.int/rec/T-REC-G.729),
 hence all patents covering these specifications shall have expired in November 2016.
 Patent pool administrator confirmed most licensed patents under the G.729 Consortium have expired (<http://www.sipro.com/G729.html>).
 
