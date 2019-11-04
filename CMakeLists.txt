@@ -20,8 +20,8 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.1)
-project(bcg729 VERSION 1.1.0 LANGUAGES C)
+cmake_minimum_required(VERSION 3.11) # we need CMake 3.11 for defining 'package_source' target as custom target
+project(bcg729 VERSION 4.3.0 LANGUAGES C)
 
 
 set(PACKAGE "${PROJECT_NAME}")
