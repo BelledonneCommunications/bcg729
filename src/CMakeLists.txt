@@ -19,7 +19,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-
+if(POLICY CMP0081 AND ENABLE_MICROSOFT_STORE_APP)
+	cmake_policy(SET CMP0081 OLD)
+endif ()
 set(BCG729_SOURCE_FILES
 	adaptativeCodebookSearch.c
 	codebooks.c
@@ -70,7 +72,7 @@ if(ENABLE_SHARED)
 			)
 		endif()
 		set_target_properties(bcg729 PROPERTIES PREFIX "lib")
-		if(${ENABLE_MICROSOFT_STORE_APP})
+		if( ENABLE_MICROSOFT_STORE_APP )
 			message(STATUS "Build bcg729 for Microsoft store")
 			set_target_properties(bcg729 PROPERTIES LINK_DIRECTORIES "\$(WindowsSDK_LibraryPath_x86);\$(NETFXKitsDir)Lib\\um\\x86;\$(VC_LibraryPath_VC_x86_store);\$(VC_ReferencesPath_ATL_x86);\$(VC_LibraryPath_VC_x86);\$(VC_LibraryPath_x86);C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\VS\\UnitTest\\lib;\$(LibraryPath)")
 			target_link_libraries(bcg729 PRIVATE "WindowsApp.lib")
