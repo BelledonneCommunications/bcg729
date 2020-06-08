@@ -57,7 +57,6 @@ if(ENABLE_STATIC)
 	set(BCG729_STATIC 1)
 	list(APPEND BCG729_CPPFLAGS "-DBCG729_STATIC")
 endif()
-
 add_definitions(-DHAVE_CONFIG_H)
 if(MSVC)
 	add_definitions("/W3")
@@ -68,6 +67,9 @@ else()
 	endif()
 	if(NOT ENABLE_TESTS) # test access inner functions so maintain visibility if we want to run tests
 		add_definitions("-fvisibility=hidden")
+	endif()
+	if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		add_definitions("-Wno-error=unused-command-line-argument")
 	endif()
 endif()
 
