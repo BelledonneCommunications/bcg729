@@ -187,7 +187,7 @@ uint8_t bcg729_vad(bcg729VADChannelContextStruct *VADChannelContext, word32_t re
 	
 	/*** parameters extraction B3.1 ***/
 	/* full band energy Ef (eq B1) = 10*log10(autoCorrelationCoefficient[0]/240), we compute Ef/10 in Q11 */
-	acc = SUB32(g729Log2_Q0Q16(autoCorrelationCoefficients[0]), (((int32_t)autoCorrelationCoefficientsScale)<<16)); /* acc = log2(R(0)) in Q16*/
+	acc = SUB32(g729Log2_Q0Q16(autoCorrelationCoefficients[0]+1), (((int32_t)autoCorrelationCoefficientsScale)<<16)); /* acc = log2(R(0)) in Q16 +1 is to avoid sending 0 to the log function */
 	acc = SHR32(SUB32(acc, LOG2_240_Q16),1); /* acc = log2(R(0)/240) in Q15 */
 	acc = MULT16_32_Q15(INV_LOG2_10_Q15, acc); /* acc Ef in Q15 */
 	Ef = (word16_t)(PSHR(acc,4));
@@ -199,6 +199,9 @@ uint8_t bcg729_vad(bcg729VADChannelContextStruct *VADChannelContext, word32_t re
 	acc=MULT16_32_Q15(lowBandFilter[0], autoCorrelationCoefficients[0]);
 	for (i=1; i<NB_LSP_COEFF+3; i++) {
 		acc = MAC16_32_Q14(acc, lowBandFilter[i], autoCorrelationCoefficients[i]);
+	}
+	if (acc<=0) { // we cannot compute the log of a negative or zero value: as done in ITU code (annex C+), set it to a tiny number(2^-16)
+		acc = 1;
 	}
 	acc = SUB32(g729Log2_Q0Q16(acc), (((int32_t)autoCorrelationCoefficientsScale)<<16)); /* acc = log2(htRh) in Q16*/
 	acc = SHR32(SUB32(acc, LOG2_240_Q16),1); /* acc = log2(htRh/240) in Q15 */
