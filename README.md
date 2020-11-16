@@ -16,12 +16,13 @@ For more information, [please visit bcg729's homepage on **linphone.org**](https
 Licensing
 ---------
 
-Copyright 2012-2019 Belledonne Communications SARL.
+Copyright © Belledonne Communications
 
-bcg729 is dual licensed. It can be licensed and distributed:
+bcg729 is dual licensed, and is available either :
 
-* Under a GNU GPLv3 license, for free (open source)
-* Under a proprietary license, for use in closed source applications.
+ - under a [GNU/GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html), for free (open source). Please make sure that you understand and agree with the terms of this license before using it (see LICENSE.txt file for details).
+
+ - under a proprietary license, for a fee, to be used in closed source applications. Contact [Belledonne Communications](https://www.linphone.org/contact) for any question about costs and services.
 
 Patents
 -------
