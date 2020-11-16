@@ -21,6 +21,10 @@
 typedef struct bcg729DecoderChannelContextStruct_struct bcg729DecoderChannelContextStruct;
 #include <stdint.h>
 
+// Version number is 1.1.0, map it on an integer
+// Note: This define starts with version 1.1.0
+#define BCG729_VERSION_NUMBER 0x010100
+
 #ifdef _WIN32
 	#ifdef BCG729_STATIC
 		#define BCG729_VISIBILITY
