@@ -199,7 +199,7 @@ void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGe
 		delta =  g729Sqrt_Q0Q7((word32_t)delta); /* delta in Q(7-deltaScaleFactor/2)*/
 
 		/* scale b (Ei) to the same scale */
-		Ei = VSHR32(Ei, deltaScaleFactor/2-7);
+		Ei = SVSHR32(Ei, deltaScaleFactor/2-7);
 
 		/* compute the two roots and pick the one with smaller absolute value */
 		/* roots are (-b +-sqrt(delta))/a. We always have a=4, divide by four when rescaling from Q(7-deltaScaleFactor) to Q0 the final result */

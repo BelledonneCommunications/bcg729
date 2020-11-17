@@ -131,7 +131,7 @@ void synthesisFilter(word16_t inputSignal[], word16_t filterCoefficients[], word
 {
 	int i;
 	for (i=0; i<L_SUBFRAME; i++) {
-		word32_t acc = SHL(inputSignal[i],12); /* acc get the first term of the sum, in Q12 (inputSignal is in Q0)*/
+		word32_t acc = SSHL(inputSignal[i],12); /* acc get the first term of the sum, in Q12 (inputSignal is in Q0)*/
 		int j;
 		for (j=0; j<NB_LSP_COEFF; j++) {
 			acc = MSU16_16(acc, filterCoefficients[j], filteredSignal[i-j-1]); /* filterCoefficients in Q12 and signal in Q0 -> acc in Q12 */

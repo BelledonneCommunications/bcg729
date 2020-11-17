@@ -178,6 +178,8 @@ struct bcg729EncoderChannelContextStruct_struct {
 /* MAXINTXX define the maximum signed integer value on XX bits(2^(XX-1) - 1) */
 /* used to check on overflows in fixed point mode */
 #define MAXINT16 0x7fff
+#define MAXUINT16 0xffff
+#define MAXINT17 0xffff
 #define MAXINT28 0x7ffffff
 #define MAXINT29 0xfffffff
 #define MININT32 0x80000000

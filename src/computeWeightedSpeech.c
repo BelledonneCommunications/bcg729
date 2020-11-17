@@ -50,7 +50,7 @@ void computeWeightedSpeech(word16_t inputSignal[], word16_t qLPCoefficients[], w
 	/*** compute LPResisualSignal (spec A3.3.3 eqA.3) in Q0 ***/
 	/* compute residual signal for the first subframe: use the first 10 qLPCoefficients */
 	for (i=0; i<L_SUBFRAME; i++) {
-		word32_t acc = SHL((word32_t)inputSignal[i], 12); /* inputSignal in Q0 is shifted to set acc in Q12 */
+		word32_t acc = SSHL((word32_t)inputSignal[i], 12); /* inputSignal in Q0 is shifted to set acc in Q12 */
 		for (j=0; j<NB_LSP_COEFF; j++) {
 			acc = MAC16_16(acc, qLPCoefficients[j],inputSignal[i-j-1]); /* qLPCoefficients in Q12, inputSignal in Q0 -> acc in Q12 */
 		}
@@ -58,7 +58,7 @@ void computeWeightedSpeech(word16_t inputSignal[], word16_t qLPCoefficients[], w
 	}
 	/* compute residual signal for the second subframe: use the second part of qLPCoefficients */
 	for (i=L_SUBFRAME; i<L_FRAME; i++) {
-		word32_t acc = SHL((word32_t)inputSignal[i], 12); /* inputSignal in Q0 is shifted to set acc in Q12 */
+		word32_t acc = SSHL((word32_t)inputSignal[i], 12); /* inputSignal in Q0 is shifted to set acc in Q12 */
 		for (j=0; j<NB_LSP_COEFF; j++) {
 			acc = MAC16_16(acc, qLPCoefficients[NB_LSP_COEFF+j],inputSignal[i-j-1]); /* qLPCoefficients in Q12, inputSignal in Q0 -> acc in Q12 */
 		}

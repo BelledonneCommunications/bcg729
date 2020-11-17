@@ -52,11 +52,11 @@ void noiseLSPQuantization(word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF], word16_
 	int i,j;
 	int L0;
 	word16_t LSF[NB_LSP_COEFF]; /* LSF coefficients in Q2.13 range [0, Pi[ */
-	word16_t weights[NB_LSP_COEFF]; /* weights in Q11 */
+	uword16_t weights[NB_LSP_COEFF]; /* weights in Q11 */
 	word16_t weightsThreshold[NB_LSP_COEFF]; /* store in Q13 the threshold used to compute the weights */
 	word16_t L1index[L0_RANGE];
 	word16_t L2index[L0_RANGE];
-	word32_t weightedMeanSquareError[L0_RANGE];
+	uword32_t weightedMeanSquareError[L0_RANGE];
 	word16_t quantizerOutput[NB_LSP_COEFF];
 	word16_t qLSF[NB_LSP_COEFF];
 
@@ -169,8 +169,8 @@ void noiseLSPQuantization(word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF], word16_
 		/* compute the weighted mean square distance using the final quantized vector according to eq21 */
 		weightedMeanSquareError[L0]=0;
 		for (i=0; i<NB_LSP_COEFF; i++) {
-			word16_t difftargetVectorQuantizedVector = SATURATE(MULT16_16_Q15(SUB32(targetVector[i], quantizedVector[i]), noiseMAPredictorSum[L0][i]), MAXINT16); /* targetVector and quantizedVector in Q13 -> result in Q13 */
-			weightedMeanSquareError[L0] = MAC16_16(weightedMeanSquareError[L0], difftargetVectorQuantizedVector, MULT16_16_Q11(difftargetVectorQuantizedVector, weights[i])); /* weights in Q11, diff in Q13 */
+			uword16_t difftargetVectorQuantizedVector = USATURATE(ABS(MULT16_16_Q15(SUB32(targetVector[i], quantizedVector[i]), noiseMAPredictorSum[L0][i])), MAXUINT16); /* targetVector and quantizedVector in Q13 -> result in Q13 */
+			weightedMeanSquareError[L0] = UMAC16_16(weightedMeanSquareError[L0], difftargetVectorQuantizedVector, MULT16_16_Q11(difftargetVectorQuantizedVector, weights[i])); /* weights in Q11, diff in Q13 */
 		}
 
 
@@ -257,10 +257,10 @@ void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, w
 {
 	int i,j;
 	word16_t LSF[NB_LSP_COEFF]; /* LSF coefficients in Q2.13 range [0, Pi[ */
-	word16_t weights[NB_LSP_COEFF]; /* weights in Q11 */
+	uword16_t weights[NB_LSP_COEFF]; /* weights in Q11 */
 	word16_t weightsThreshold[NB_LSP_COEFF]; /* store in Q13 the threshold used to compute the weights */
 	int L0;
-	word32_t weightedMeanSquareError[L0_RANGE];
+	uword32_t weightedMeanSquareError[L0_RANGE];
 	word16_t L1index[L0_RANGE];
 	word16_t L2index[L0_RANGE];
 	word16_t L3index[L0_RANGE];
@@ -391,8 +391,8 @@ void LSPQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, w
 		/* compute the weighted mean square distance using the final quantized vector according to eq21 */
 		weightedMeanSquareError[L0]=0;
 		for (i=0; i<NB_LSP_COEFF; i++) {
-			word16_t difftargetVectorQuantizedVector = SATURATE(MULT16_16_Q15(SUB32(targetVector[i], quantizedVector[i]), MAPredictorSum[L0][i]), MAXINT16); /* targetVector and quantizedVector in Q13 -> result in Q13 */
-			weightedMeanSquareError[L0] = MAC16_16(weightedMeanSquareError[L0], difftargetVectorQuantizedVector, MULT16_16_Q11(difftargetVectorQuantizedVector, weights[i])); /* weights in Q11, diff in Q13 */
+			uword16_t difftargetVectorQuantizedVector = USATURATE(ABS(MULT16_16_Q15(SUB32(targetVector[i], quantizedVector[i]), MAPredictorSum[L0][i])), MAXUINT16); /* targetVector and quantizedVector in Q13 -> result in Q13 */
+			weightedMeanSquareError[L0] = UMAC16_16(weightedMeanSquareError[L0], difftargetVectorQuantizedVector, MULT16_16_Q11(difftargetVectorQuantizedVector, weights[i])); /* weights in Q11, diff in Q13 */
 		}
 	}
 

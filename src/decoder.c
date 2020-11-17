@@ -36,8 +36,6 @@
 #include "postProcessing.h"
 #include "cng.h"
 
-#include "stdio.h"
-
 /* buffers allocation */
 static const word16_t previousqLSPInitialValues[NB_LSP_COEFF] = {30000, 26000, 21000, 15000, 8000, 0, -8000,-15000,-21000,-26000}; /* in Q0.15 the initials values for the previous qLSP buffer */
 

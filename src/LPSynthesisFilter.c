@@ -36,7 +36,7 @@ void LPSynthesisFilter (word16_t *excitationVector, word16_t *LPCoefficients, wo
 	int i;
 	/* compute excitationVector[i] - Sum0-9(LPCoefficients[j]*reconstructedSpeech[i-j]) */
 	for (i=0; i<L_SUBFRAME; i++) {
-		word32_t acc = SHL(excitationVector[i],12); /* acc get the first term of the sum, in Q12 (excitationVector is in Q0)*/
+		word32_t acc = SSHL(excitationVector[i],12); /* acc get the first term of the sum, in Q12 (excitationVector is in Q0)*/
 		int j;
 		for (j=0; j<NB_LSP_COEFF; j++) {
 			acc = MSU16_16(acc, LPCoefficients[j], reconstructedSpeech[i-j-1]);

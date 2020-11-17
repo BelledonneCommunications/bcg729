@@ -6,24 +6,23 @@
 if [ ! -d "patterns" ]; then
 	rm -f ./bcg729-patterns.zip
    # no pattern directory: download it from 
-   # http://www.belledonne-communications.com/downloads/bcg729-patterns.zip
-   wget http://www.belledonne-communications.com/bc-downloads/bcg729-patterns.zip
-   if [ -e bcg729-patterns.zip ]; then
+   wget http://linphone.org/bc-downloads/bcg729-patterns-v1.1.0.zip
+   if [ -e bcg729-patterns-v1.1.0.zip ]; then
 	# check file
-	if [[ `openssl md5 bcg729-patterns.zip | grep -c ee5702e17cff8484d1396e6f23f84305` -ne 0 ]]; then
+	if [[ `openssl md5 bcg729-patterns-v1.1.0.zip | grep -c f223c39eb471350124e56978760858f7` -ne 0 ]]; then
 		# file ok, unzip it
-		unzip bcg729-patterns.zip
+		unzip bcg729-patterns-v1.1.0.zip
 	   	if [[ $? -ne 0 ]]; then
-			echo "Error: unable to unzip correctly bcg729-patterns.zip, try to do it manually"
+			echo "Error: unable to unzip correctly bcg729-patterns-v1.1.0.zip, try to do it manually"
 		else	
-			rm bcg729-patterns.zip
+			rm bcg729-patterns-v1.1.0.zip
 		fi
 	else
-		echo "Error: bad checksum on bcg729-patterns.zip downloaded from http://www.belledonne-communications.com/bc-downloads/.\nTry again"
+		echo "Error: bad checksum on bcg729-patterns-v1.1.0.zip downloaded from http://linphone.org/bc-downloads/.\nTry again"
 		exit 1
 	fi
    else
-	echo "Error: Unable to download bcg729-patterns.zip pattern archive from http://www.belledonne-communications.com/bc-downloads/"
+	echo "Error: Unable to download bcg729-patterns-v1.1.0.zip pattern archive from http://linphone.org/bc-downloads/"
 	exit 1
    fi
 fi

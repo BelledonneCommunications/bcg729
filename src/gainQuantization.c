@@ -142,7 +142,7 @@ void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, 
 		numeratorH = (numeratorH>0)?numeratorH:-numeratorH;
 		numeratorNorm = countLeadingZeros(numeratorH);
 		if (numeratorNorm >= 9) {
-			bestAdaptativeCodebookGain = (word32_t)(DIV64(SHL64(numerator,9), denominator)); /* bestAdaptativeCodebookGain in Q9 */
+			bestAdaptativeCodebookGain = (word32_t)(DIV64(SSHL64(numerator,9), denominator)); /* bestAdaptativeCodebookGain in Q9 */
 		} else {
 			word64_t shiftedDenominator = SHR64(denominator, 9-numeratorNorm);
 			if (shiftedDenominator>0) { /* can't shift left by 9 the numerator, can we shift right by 9-numeratorNorm the denominator without hiting 0 */
@@ -159,7 +159,7 @@ void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, 
 		numeratorNorm = countLeadingZeros(numeratorH);
 
 		if (numeratorNorm >= 14) {
-			bestFixedCodebookGain = (word32_t)(DIV64(SHL64(numerator,14), denominator)); 
+			bestFixedCodebookGain = (word32_t)(DIV64(SSHL64(numerator,14), denominator));
 		} else {
 			word64_t shiftedDenominator = SHR64(denominator, 14-numeratorNorm); /* bestFixedCodebookGain in Q14 */
 			if (shiftedDenominator>0) { /* can't shift left by 9 the numerator, can we shift right by 9-numeratorNorm the denominator without hiting 0 */
@@ -190,9 +190,9 @@ void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, 
 	if (indexBaseGb>0) indexBaseGb--;
 
 	/*** test all possibilities of Ga and Gb indexes and select the best one ***/
-	xy = -SHL(xy,1); /* xy term is always used with a -2 factor */
-	xz = -SHL(xz,1); /* xz term is always used with a -2 factor */
-	yz = SHL(yz,1); /* yz term is always used with a 2 factor */
+	xy = -SSHL(xy,1); /* xy term is always used with a -2 factor */
+	xz = -SSHL(xz,1); /* xz term is always used with a -2 factor */
+	yz = SSHL(yz,1); /* yz term is always used with a 2 factor */
 
 	for (i=0; i<4; i++) {
 		for (j=0; j<8; j++) {

@@ -71,7 +71,7 @@ void autoCorrelation2LP(word32_t autoCorrelationCoefficients[], word16_t LPCoeff
 	/* init */
 	LPCoefficients[0] = ONE_IN_Q27;
 	LPCoefficients[1] = -DIV32_32_Q27(autoCorrelationCoefficients[1], autoCorrelationCoefficients[0]); /* result in Q27(but<1) */
-	reflectionCoefficients[0] = SHL(LPCoefficients[1],4); /* k[0] is -r1/r0 in Q31 */
+	reflectionCoefficients[0] = SSHL(LPCoefficients[1],4); /* k[0] is -r1/r0 in Q31 */
 	/* E = r0(1 - a[1]^2) in Q31 */
 	E = MULT32_32_Q31(autoCorrelationCoefficients[0], SUB32(ONE_IN_Q31, MULT32_32_Q23(LPCoefficients[1], LPCoefficients[1]))); /* LPCoefficient[1] is in Q27, using a Q23 operation will result in a Q31 variable */
 	
@@ -86,7 +86,7 @@ void autoCorrelation2LP(word32_t autoCorrelationCoefficients[], word16_t LPCoeff
 		for (j=1; j<i; j++) {
 			sum = MAC32_32_Q31(sum, LPCoefficients[j], autoCorrelationCoefficients[i-j]);/* LPCoefficients in Q27, autoCorrelation in Q31 -> result in Q27 -> sum in Q27 */
 		}
-		sum = ADD32(SHL(sum, 4), autoCorrelationCoefficients[i]); /* set sum in Q31 and add r[0] */
+		sum = ADD32(SSHL(sum, 4), autoCorrelationCoefficients[i]); /* set sum in Q31 and add r[0] */
 		
 		/* a[i] = -sum/E                                                           */
 		LPCoefficients[i] = -DIV32_32_Q31(sum,E); /* LPCoefficient of current iteration is in Q31 for now, it will be set to Q27 at the end of this iteration */
@@ -165,7 +165,7 @@ void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[], word32_t reflect
 		autoCorrelationCoefficients[0] = acc64;
 	} else {
 		rightShiftToNormalise = -countLeadingZeros((word32_t)acc64);
-		autoCorrelationCoefficients[0] = SHL((word32_t)acc64, -rightShiftToNormalise);
+		autoCorrelationCoefficients[0] = SSHL((word32_t)acc64, -rightShiftToNormalise);
 	}
 
 	/* give current autoCorrelation coefficients scale to the output */
@@ -190,7 +190,7 @@ void computeLP(word16_t signal[], word16_t LPCoefficientsQ12[], word32_t reflect
 				acc32 = MAC16_16(acc32, windowedSignal[j], windowedSignal[j-i]);
 			}
 			/* normalise it */
-			autoCorrelationCoefficients[i] = SHL(acc32, -rightShiftToNormalise);
+			autoCorrelationCoefficients[i] = SSHL(acc32, -rightShiftToNormalise);
 		}
 	}
 

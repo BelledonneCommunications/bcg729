@@ -60,8 +60,8 @@ int LP2LSPConversion(word16_t LPCoefficients[], word16_t LSPCoefficients[])
 	}
 	/* convert the coefficients from Q12 to Q15 to be used by the Chebyshev Polynomial function (f1/2[0] aren't used so they are not converted) */
 	for (i=1; i<6; i++) {
-		f1[i] = SHL(f1[i], 3);
-		f2[i] = SHL(f2[i], 3);
+		f1[i] = SSHL(f1[i], 3);
+		f2[i] = SSHL(f2[i], 3);
 	}
 
 	/*** Compute at each step(50 steps for the AnnexA version) the Chebyshev polynomial to find the 10 roots ***/
@@ -100,7 +100,7 @@ int LP2LSPConversion(word16_t LPCoefficients[], word16_t LSPCoefficients[])
 
 			/* linear interpolation for better root accuracy */
 			/* xMean = xLow - (xHigh-xLow)* previousCx/(Cx-previousCx); */
-			xMean = (word16_t)SUB32(xLow, MULT16_32_Q15(SUB32(xHigh, xLow), DIV32(SHL(previousCx, 14), SHR(SUB32(Cx, previousCx), 1)))); /* Cx are in Q2.15 so we can shift them left 14 bits, the denominator is shifted righ by 1 so the division result is in Q15 */
+			xMean = (word16_t)SUB32(xLow, MULT16_32_Q15(SUB32(xHigh, xLow), DIV32(SSHL(SATURATE(previousCx, MAXINT17), 14), SHR(SUB32(Cx, previousCx), 1)))); /* Cx are in Q2.15 so we can shift them left 14 bits, the denominator is shifted righ by 1 so the division result is in Q15 */
 
 			/* recompute previousCx with the new coefficients */
 			previousCx = ChebyshevPolynomial(xMean, polynomialCoefficients);
@@ -132,11 +132,11 @@ word32_t ChebyshevPolynomial(word16_t x, word32_t f[])
 {
 	/* bk in Q15*/
 	word32_t bk; 
-	word32_t bk1 = ADD32(SHL(x,1), f[1]); /* init: b4=2x+f1 */
+	word32_t bk1 = ADD32(SSHL(x,1), f[1]); /* init: b4=2x+f1 */
 	word32_t bk2 = ONE_IN_Q15; /* init: b5=1 */
 	uint8_t k;
 	for (k=3; k>0; k--) { /* at the end of loop execution we have b1 in bk1 and b2 in bk2 */ 
-		bk = SUB32(ADD32(SHL(MULT16_32_Q15(x,bk1), 1), f[5-k]), bk2); /* bk = 2*x*bk1 − bk2 + f(5-k) all in Q15*/
+		bk = SUB32(ADD32(SSHL(MULT16_32_Q15(x,bk1), 1), f[5-k]), bk2); /* bk = 2*x*bk1 − bk2 + f(5-k) all in Q15*/
 		bk2 = bk1;
 		bk1 = bk;
 	}

@@ -139,7 +139,7 @@ static BCG729_INLINE word32_t g729Sqrt_Q0Q7(uword32_t x)
 	if (x==0) return 0;
 	/* set x in Q14 in range [0.25,1[ */
 	k = (19-unsignedCountLeadingZeros(x))>>1;
-	x = VSHR32(x, (k<<1)); /* x = x.2^-2k */
+	x = VSHR32(x, k*2); /* x = x.2^-2k */
 
 	/* sqrt(x) ~= 0.22178 + 1.29227*x - 0.77070*x^2 + 0.25659*x^3 (for .25 < x < 1) */
 	/* consider x as in Q14: y = x.2^(-2k-14) -> and give sqrt(y).2^14 = sqrt(x).2^(-k-7).2^14 */
@@ -254,7 +254,7 @@ static BCG729_INLINE word16_t g729Atan_Q15Q13(word32_t x)
 	if(x > KtanPI12){
 		highSegment = 1;
 		/* x = (x - k)/(1 + k*x); */
-		x = DIV32(SHL(SUB32(x, KtanPI6), 15), ADD32(MULT16_16_Q15(KtanPI6, x), ONE_IN_Q15));
+		x = DIV32(SSHL(SUB32(x, KtanPI6), 15), ADD32(MULT16_16_Q15(KtanPI6, x), ONE_IN_Q15));
 	}
 
 	/* argument is now < tan(15 degrees) */
@@ -295,7 +295,7 @@ static BCG729_INLINE word16_t g729Atan_Q15Q13(word32_t x)
 /*****************************************************************************/
 static BCG729_INLINE word16_t g729Asin_Q15Q13(word16_t x)
 {
-	return g729Atan_Q15Q13(DIV32(SHL(x,15), PSHR(g729Sqrt_Q0Q7(SUB32(ONE_IN_Q30, MULT16_16(x,x))),7))); /*  atan(x/sqrt(1.0 - x*x)) */
+	return g729Atan_Q15Q13(DIV32(SSHL(x,15), PSHR(g729Sqrt_Q0Q7(SUB32(ONE_IN_Q30, MULT16_16(x,x))),7))); /*  atan(x/sqrt(1.0 - x*x)) */
 }
 
 /*****************************************************************************/

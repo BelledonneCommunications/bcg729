@@ -100,7 +100,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 	scaledResidualSignal = &(decoderChannelContext->scaledResidualSignalBuffer[MAXIMUM_INT_PITCH_DELAY+subframeIndex]);
 
 	for (i=0; i<L_SUBFRAME; i++) {
-		word32_t acc = SHL((word32_t)reconstructedSpeech[i], 12); /* reconstructedSpeech in Q0 shifted to set acc in Q12 */
+		word32_t acc = SSHL((word32_t)reconstructedSpeech[i], 12); /* reconstructedSpeech in Q0 shifted to set acc in Q12 */
 		for (j=0; j<NB_LSP_COEFF; j++) {
 			acc = MAC16_16(acc, LPGammaNCoefficients[j],reconstructedSpeech[i-j-1]); /* LPGammaNCoefficients in Q12, reconstructedSpeech in Q0 -> acc in Q12 */
 		}
@@ -219,7 +219,7 @@ void postFilter(bcg729DecoderChannelContextStruct *decoderChannelContext, word16
 
 	hf[0] = 4096; /* 1 in Q12 as LPGammaNCoefficients and LPGammaDCoefficient doesn't contain the first element which is 1 and past values of hf are 0 */
 	for (i=1; i<11; i++) {
-		word32_t acc = (word32_t)SHL(LPGammaNCoefficients[i-1],12); /* LPGammaNCoefficients in Q12 -> acc in Q24 */
+		word32_t acc = (word32_t)SSHL(LPGammaNCoefficients[i-1],12); /* LPGammaNCoefficients in Q12 -> acc in Q24 */
 		for (j=0; j<NB_LSP_COEFF && j<i; j++) { /* j<i to avoid access to negative index of hf(past values are 0 anyway) */
 			acc = MSU16_16(acc, LPGammaDCoefficients[j], hf[i-j-1]); /* LPGammaDCoefficient in Q12, hf in Q12 -> Q24 TODO: Possible overflow?? */
 		}

@@ -82,13 +82,13 @@ void computePolynomialCoefficients(word16_t qLSP[], word32_t f[])
 	/* Note : index of qLSP are -1 respect of what is in the spec because qLSP array is indexed from 0-9 and not 1-10 */
 	for (i=2; i<6; i++) {
 		/* spec: f[i] = 2(f[i-2] - qLSP[2i-1]*f[i-1]) */
-		f[i] = SHL(SUB32(f[i-2], MULT16_32_P15(qLSP[2*i-2], f[i-1])),1); /* with qLSP in Q0.15 and f in Q24 */
+		f[i] = SSHL(SUB32(f[i-2], MULT16_32_P15(qLSP[2*i-2], f[i-1])),1); /* with qLSP in Q0.15 and f in Q24 */
 		for (j=i-1; j>1; j--) { /* case of j=1 is just doing f[1] -= 2*qLSP[2i-1], done after the loop in order to avoid reference to f[-1] */
 			/* spec: f[j] = f[j] -2*qLSP[2i-i]*f[j-1] + f[j-2] (all right terms refer to the value at the previous iteration on i indexed loop) */
 			f[j] = ADD32(f[j], SUB32(f[j-2], MULT16_32_P14(qLSP[2*i-2], f[j-1]))); /* qLPS in Q0.15 and f in Q24, using MULT16_32_P14 instead of P15 does the *2 on qLSP. Result in Q24 */
 		}
 		/* f[1] -=  2*qLSP[2i-1] */
-		f[1] = SUB32(f[1], SHL(qLSP[2*i-2],10)); /* qLSP in Q0.15, must be shift by 9 to get in Q24 and one more to be *2 */
+		f[1] = SUB32(f[1], SSHL(qLSP[2*i-2],10)); /* qLSP in Q0.15, must be shift by 9 to get in Q24 and one more to be *2 */
 	}
 	return;
 }
