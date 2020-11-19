@@ -60,7 +60,7 @@ void fixedCodebookSearch(word16_t targetSignal[], word16_t impulseResponse[], in
 	int correlationSignalSign[L_SUBFRAME]; /* to store the sign of each correlationSignal element */
 	/* build the matrix Ф' : impulseResponse correlation matrix spec 3.8.1 eq51, eq56 and eq57 */
 	/* correlationSignal turns to absolute values and sign of elements is stored in correlationSignalSign */
-	word32_t Phi[L_SUBFRAME][L_SUBFRAME] = {0};
+	word32_t Phi[L_SUBFRAME][L_SUBFRAME] = {{0}};
 	int m3Base;
 	int i0=0, i1=0, i2=0, i3=0;
 	word32_t correlationSquareMax = -1;
