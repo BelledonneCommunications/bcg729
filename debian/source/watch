@@ -1,0 +1,5 @@
+version=3
+
+opts=\
+filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/bcg729-$1\.tar\.gz/,\
+  https://github.com/BelledonneCommunications/bcg729/tags .*/v?(\d\S*)\.tar\.gz

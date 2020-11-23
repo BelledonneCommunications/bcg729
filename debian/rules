@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Uncomment this to change the hardening options
+#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+%:
+	dh $@ --parallel \
+		--with autotools-dev --with autoreconf \
+		--buildsystem=autoconf
+
+override_dh_auto_configure:
+	dh_auto_configure -- --enable-static --enable-shared --disable-tests
+
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/tmp
+	sed -i "/dependency_libs/ s/'.*'/''/" "$(CURDIR)"/debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/mediastreamer/plugins/msbcg729.la
+
+override_dh_strip:
+	dh_strip -plibbcg729-0 --dbg-package=libbcg729-0-dbg
+	dh_strip -pmediastreamer-plugin-g729 --dbg-package=mediastreamer-plugin-g729-dbg

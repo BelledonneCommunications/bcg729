@@ -1,0 +1,11 @@
+bcg729 (1.0.0-2) unstable; urgency=medium
+
+  * Custom build.
+
+ -- Boris Manojlovic <boris@steki.net>  Fri, 30 Oct 2015 09:19:52 +0000
+
+bcg729 (1.0.0-1) unstable; urgency=medium
+
+  * Initial release (Closes: #785480)
+
+ -- Felix Lechner <felix.lechner@gmail.com>  Sat, 16 May 2015 14:03:19 -0700

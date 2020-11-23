@@ -1,0 +1,4 @@
+enable-subdir-objects.patch
+install-codec-library-normally.patch
+remove-lib-prefix-from-plugin.patch
+build-only-nonversioned-shared-version-of-plugin.patch

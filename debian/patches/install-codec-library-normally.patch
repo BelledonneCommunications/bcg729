@@ -1,0 +1,30 @@
+Description: Install codec library in normal location, and with headers
+ For some reason, the library is installed in a different place
+ when the mediastreamer plugin is also built.
+Author: Felix Lechner <felix.lechner@gmail.com>
+Forwarded: no
+Last-Update: 2015-05-16
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -1,8 +1,4 @@
+-if BUILD_MSBCG729
+-noinst_LTLIBRARIES = libbcg729.la
+-else
+ lib_LTLIBRARIES = libbcg729.la
+-endif
+ 
+ libbcg729_la_SOURCES=	LP2LSPConversion.c \
+ 			LPSynthesisFilter.c \
+--- a/include/bcg729/Makefile.am
++++ b/include/bcg729/Makefile.am
+@@ -3,8 +3,6 @@ bcg729_includedir=$(includedir)/bcg729
+ public_headers=encoder.h decoder.h
+ 
+ bcg729_include_HEADERS=
+-if !BUILD_MSBCG729
+ bcg729_include_HEADERS+=$(public_headers)
+-endif
+ 
+ EXTRA_DIST=$(public_headers)
