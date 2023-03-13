@@ -53,9 +53,7 @@ Building by Autotools way is deprecated. Use [CMake][cmake-website] to configure
 
 * `CMAKE_INSTALL_PREFIX=<string>` : install prefix
 * `CMAKE_PREFIX_PATH=<string>`    : column-separated list of prefixes where to look for dependencies
-* `ENABLE_SHARED=NO`              : do not build the shared library
-* `ENABLE_STATIC=NO`              : do not build the static library
-* `ENABLE_TESTS=NO`               : do not build non-regression tests
+* `ENABLE_UNIT_TESTS=NO`               : do not build non-regression tests
 
 
 ### Note for packagers

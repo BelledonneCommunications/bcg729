@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# Copyright (C) 2014-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -21,6 +21,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
+
 project(bcg729 VERSION 1.1.1 LANGUAGES C)
 
 
@@ -34,27 +35,15 @@ set(PACKAGE_URL "")
 set(VERSION "${PACKAGE_VERSION}")
 
 
-option(ENABLE_SHARED "Build shared library." YES)
-option(ENABLE_STATIC "Build static library." YES)
 option(ENABLE_STRICT "Build with strict compile options." YES)
-option(ENABLE_TESTS "Enable compilation of the tests." NO)
+option(ENABLE_UNIT_TESTS "Enable compilation of the tests." NO)
 
 include(GNUInstallDirs)
 
 
-include_directories(
-	include
-	src
-	${CMAKE_CURRENT_BINARY_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}/src
-)
-set(MSVC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/MSVC")
-if(MSVC)
-	include_directories(${MSVC_INCLUDE_DIR})
-endif()
 
 set(BCG729_CPPFLAGS )
-if(ENABLE_STATIC)
+if(NOT BUILD_SHARED_LIBS)
 	set(BCG729_STATIC 1)
 	list(APPEND BCG729_CPPFLAGS "-DBCG729_STATIC")
 endif()
@@ -69,7 +58,7 @@ else()
 			add_definitions(" -Werror -Wextra -Wno-unused-parameter -Wno-missing-field-initializers ")
 		endif()
 	endif()
-	if(NOT ENABLE_TESTS) # test access inner functions so maintain visibility if we want to run tests
+	if(NOT ENABLE_UNIT_TESTS) # test access inner functions so maintain visibility if we want to run tests
 		add_definitions("-fvisibility=hidden")
 	endif()
 	if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -77,11 +66,12 @@ else()
 	endif()
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(${PROJECT_SOURCE_DIR}/config.h.cmake ${PROJECT_BINARY_DIR}/config.h)
 
 add_subdirectory(include)
 add_subdirectory(src)
-if(ENABLE_TESTS)
+if(ENABLE_UNIT_TESTS AND NOT WIN32)
+	# Deactivated on Windows because of symbol export issues (TODO: fix that)
 	add_subdirectory(test)
 endif()
 
@@ -89,15 +79,15 @@ endif()
 include(CMakePackageConfigHelpers)
 set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
 write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+	"${PROJECT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
 	VERSION ${PACKAGE_VERSION}
 	COMPATIBILITY AnyNewerVersion
 )
 export(EXPORT Bcg729Targets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/Bcg729Targets.cmake"
+	FILE "${PROJECT_BINARY_DIR}/Bcg729Targets.cmake"
 )
 configure_package_config_file(Bcg729Config.cmake.in
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
+	"${PROJECT_BINARY_DIR}/Bcg729Config.cmake"
 	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
 	NO_SET_AND_CHECK_MACRO
 )
@@ -107,11 +97,11 @@ set(exec_prefix "\${prefix}")
 set(includedir  "\${prefix}/include")
 set(libdir "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
 configure_file(libbcg729.pc.in
-	"${CMAKE_CURRENT_BINARY_DIR}/libbcg729.pc"
+	"${PROJECT_BINARY_DIR}/libbcg729.pc"
 	@ONLY
 )
 install(FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/libbcg729.pc"
+	"${PROJECT_BINARY_DIR}/libbcg729.pc"
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
@@ -120,8 +110,8 @@ install(EXPORT Bcg729Targets
 	DESTINATION ${CONFIG_PACKAGE_LOCATION}
 )
 install(FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729Config.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
+	"${PROJECT_BINARY_DIR}/Bcg729Config.cmake"
+	"${PROJECT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
 	DESTINATION ${CONFIG_PACKAGE_LOCATION}
 )
 

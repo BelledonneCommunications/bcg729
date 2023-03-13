@@ -24,6 +24,8 @@ set(BCG729_LIBRARY bcg729)
 
 set(UTIL_SRC src/testUtils.c  src/testUtils.h)
 
+include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_BINARY_DIR})
+
 add_executable(adaptativeCodebookSearchTest src/adaptativeCodebookSearchTest.c ${UTIL_SRC})
 target_link_libraries(adaptativeCodebookSearchTest ${BCG729_LIBRARY})
 
