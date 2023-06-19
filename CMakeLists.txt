@@ -20,9 +20,9 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.22)
 
-project(bcg729 VERSION 1.1.1 LANGUAGES C)
+project(BCG729 VERSION 1.1.1 LANGUAGES C)
 
 
 set(PACKAGE "${PROJECT_NAME}")
@@ -77,20 +77,29 @@ endif()
 
 
 include(CMakePackageConfigHelpers)
-set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_DATADIR}/Bcg729/cmake")
-write_basic_package_version_file(
-	"${PROJECT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-	VERSION ${PACKAGE_VERSION}
-	COMPATIBILITY AnyNewerVersion
-)
-export(EXPORT Bcg729Targets
-	FILE "${PROJECT_BINARY_DIR}/Bcg729Targets.cmake"
-)
-configure_package_config_file(Bcg729Config.cmake.in
-	"${PROJECT_BINARY_DIR}/Bcg729Config.cmake"
-	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
+set(CMAKE_MODULES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake")
+configure_package_config_file("${PROJECT_NAME}Config.cmake.in" "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+	INSTALL_DESTINATION "${CMAKE_MODULES_INSTALL_DIR}"
 	NO_SET_AND_CHECK_MACRO
 )
+write_basic_package_version_file("${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+	VERSION ${PROJECT_VERSION}
+	COMPATIBILITY AnyNewerVersion
+)
+install(FILES
+	"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+	"${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+	DESTINATION ${CMAKE_MODULES_INSTALL_DIR}
+)
+
+export(EXPORT ${PROJECT_NAME}Targets
+	FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+)
+install(EXPORT ${PROJECT_NAME}Targets
+	FILE "${PROJECT_NAME}Targets.cmake"
+	DESTINATION ${CMAKE_MODULES_INSTALL_DIR}
+)
+
 
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")
@@ -105,15 +114,5 @@ install(FILES
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
-install(EXPORT Bcg729Targets
-	FILE Bcg729Targets.cmake
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
-install(FILES
-	"${PROJECT_BINARY_DIR}/Bcg729Config.cmake"
-	"${PROJECT_BINARY_DIR}/Bcg729ConfigVersion.cmake"
-	DESTINATION ${CONFIG_PACKAGE_LOCATION}
-)
 
 add_subdirectory(build)
-

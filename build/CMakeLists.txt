@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2017-2018  Belledonne Communications, Grenoble France
+# Copyright (C) 2017-2023  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -21,7 +21,8 @@
 ############################################################################
 
 if(NOT CPACK_PACKAGE_NAME)
-	set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+	string(TOLOWER "${PROJECT_NAME}" LOWERCASE_PROJECT_NAME)
+	set(CPACK_PACKAGE_NAME "${LOWERCASE_PROJECT_NAME}")
 ENDIF()
 
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt")
