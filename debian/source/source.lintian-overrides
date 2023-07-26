@@ -1,0 +1,2 @@
+# Upstream does not sign GitHub tarfiles
+bcg729 source: debian-watch-may-check-gpg-signature

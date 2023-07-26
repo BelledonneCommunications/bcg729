@@ -1,0 +1,7 @@
+libbcg729.so.0 libbcg729-0 #MINVER#
+ bcg729Decoder@Base 1.0.0
+ bcg729Encoder@Base 1.0.0
+ closeBcg729DecoderChannel@Base 1.0.0
+ closeBcg729EncoderChannel@Base 1.0.0
+ initBcg729DecoderChannel@Base 1.0.0
+ initBcg729EncoderChannel@Base 1.0.0
