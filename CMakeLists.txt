@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.5)
 
 project(BCG729 VERSION 1.1.1 LANGUAGES C)
 
