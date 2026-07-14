@@ -6,7 +6,7 @@
 if [ ! -d "patterns" ]; then
 	rm -f ./bcg729-patterns.zip
    # no pattern directory: download it from 
-   wget http://linphone.org/bc-downloads/bcg729-patterns-v1.1.0.zip
+   wget https://github.com/jeannotlapin/bcg729-test-patterns/releases/download/v1_1_0/bcg729-patterns-v1.1.0.zip
    if [ -e bcg729-patterns-v1.1.0.zip ]; then
 	# check file
 	if [[ `openssl md5 bcg729-patterns-v1.1.0.zip | grep -c f223c39eb471350124e56978760858f7` -ne 0 ]]; then
@@ -18,11 +18,11 @@ if [ ! -d "patterns" ]; then
 			rm bcg729-patterns-v1.1.0.zip
 		fi
 	else
-		echo "Error: bad checksum on bcg729-patterns-v1.1.0.zip downloaded from http://linphone.org/bc-downloads/.\nTry again"
+		echo "Error: bad checksum on bcg729-patterns-v1.1.0.zip downloaded from https://github.com/jeannotlapin/bcg729-test-patterns/releases/download/v1_1_0/bcg729-patterns-v1.1.0.zip/.\nTry again"
 		exit 1
 	fi
    else
-	echo "Error: Unable to download bcg729-patterns-v1.1.0.zip pattern archive from http://linphone.org/bc-downloads/"
+	echo "Error: Unable to download bcg729-patterns-v1.1.0.zip pattern archive from https://github.com/jeannotlapin/bcg729-test-patterns/releases/download/v1_1_0/bcg729-patterns-v1.1.0.zip"
 	exit 1
    fi
 fi
