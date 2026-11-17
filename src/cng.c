@@ -55,7 +55,7 @@ bcg729CNGChannelContextStruct *initBcg729CNGChannel() {
 /*                                                        [-154,79]                        */
 /*                                                                                         */
 /*******************************************************************************************/
-void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGeneratorSeed, word16_t *excitationVector) {
+void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGeneratorSeed, word16_t *excitationVector, word16_t *adaptativeCodebookGains, int16_t *intPitchDelays) {
 	int16_t fracPitchDelay,intPitchDelay;
 	uint16_t randomNumberBuffer;
 	uint8_t subframeIndex = 0;
@@ -105,6 +105,12 @@ void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGe
 		randomNumberBuffer = randomNumberBuffer>>1; /* 7 random bits left */
 		/* randomly generate Ga : adaptative gain eqB.22: max is 0,5  */
 		Ga = (pseudoRandom(randomGeneratorSeed)&0x1fff)<<1; /* get 16 bits of pseudoRandom value but make sure it is < 0.5 in Q15 */
+
+		/* the encoder updates its taming memory with this pitch gain and delay, as the ITU code does: no gain and a delay of 41 for a null target gain */
+		if (adaptativeCodebookGains != NULL && intPitchDelays != NULL) {
+			adaptativeCodebookGains[subframeIndex/L_SUBFRAME] = (targetGain == 0) ? 0 : SHR(Ga, 1);
+			intPitchDelays[subframeIndex/L_SUBFRAME] = (targetGain == 0) ? L_SUBFRAME+1 : intPitchDelay;
+		}
 
 
 
@@ -358,5 +364,5 @@ void decodeSIDframe(bcg729CNGChannelContextStruct *CNGChannelContext, uint8_t pr
 	}
 
 	/* get the excitation vector */
-	computeComfortNoiseExcitationVector(CNGChannelContext->smoothedSIDGain, pseudoRandomSeed, excitationVector);
+	computeComfortNoiseExcitationVector(CNGChannelContext->smoothedSIDGain, pseudoRandomSeed, excitationVector, NULL, NULL);
 }

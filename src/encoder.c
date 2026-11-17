@@ -46,6 +46,90 @@
 /* buffers allocation */
 static const word16_t previousLSPInitialValues[NB_LSP_COEFF] = {30000, 26000, 21000, 15000, 8000, 0, -8000,-15000,-21000,-26000}; /* in Q0.15 the initials values for the previous LSP buffer */
 
+/* the zone of the excitation error memory of each pitch delay, table tab_zone of the ITU code */
+static const uint8_t excitationErrorZone[MAXIMUM_INT_PITCH_DELAY+L_INTERPOL-1] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+
+/*****************************************************************************/
+/* tamingNeeded : test_err of the ITU code, whether the accumulated potential */
+/*    error of the adaptative codebook contribution asks to limit the pitch  */
+/*    gain, so that a mismatch between encoder and decoder does not grow     */
+/*    parameters:                                                            */
+/*      -(i) excitationError: the 4 zones of accumulated error in Q14        */
+/*      -(i) intPitchDelay, fracPitchDelay: the pitch delay of the subframe  */
+/*    return value: 1 if taming is needed, 0 otherwise                       */
+/*                                                                           */
+/*****************************************************************************/
+static uint8_t tamingNeeded(word32_t excitationError[], int16_t intPitchDelay, int16_t fracPitchDelay)
+{
+	int i;
+	int16_t delay = (fracPitchDelay > 0) ? intPitchDelay+1 : intPitchDelay;
+	int16_t firstZoneIndex = delay - (L_SUBFRAME+L_INTERPOL-1);
+	word32_t maximum = -1;
+	if (firstZoneIndex < 0) {
+		firstZoneIndex = 0;
+	}
+	for (i=excitationErrorZone[delay+L_INTERPOL-3]; i>=excitationErrorZone[firstZoneIndex]; i--) {
+		if (excitationError[i] > maximum) {
+			maximum = excitationError[i];
+		}
+	}
+	return (maximum > TAMING_ERROR_THRESHOLD) ? 1 : 0;
+}
+
+/*****************************************************************************/
+/* updateExcitationError : update_exc_err of the ITU code, the error of the  */
+/*    adaptative codebook contribution of the subframe: 1 + error*gain over  */
+/*    the zones its pitch delay reaches, the worst becomes the newest zone   */
+/*    parameters:                                                            */
+/*      -(i/o) excitationError: the 4 zones of accumulated error in Q14      */
+/*      -(i) adaptativeCodebookGain: the quantized pitch gain in Q14         */
+/*      -(i) intPitchDelay: the integer pitch delay of the subframe          */
+/*                                                                           */
+/*****************************************************************************/
+static word32_t excitationErrorOfZone(word32_t error, word16_t adaptativeCodebookGain)
+{
+	/* 1 + error*gain in Q14 as the ITU code computes it: Mpy_32_16 of the double precision error, saturated on 32 bits */
+	word16_t high = (word16_t)(error >> 16);
+	word16_t low = (word16_t)((error >> 1) - ((word32_t)high << 15));
+	word64_t product = (word64_t)4*high*adaptativeCodebookGain + (word64_t)4*((low*adaptativeCodebookGain) >> 15) + 16384;
+	return (product > MAXINT32) ? MAXINT32 : (word32_t)product;
+}
+
+static void updateExcitationError(word32_t excitationError[], word16_t adaptativeCodebookGain, int16_t intPitchDelay)
+{
+	int i;
+	word32_t worst = -1;
+	if (intPitchDelay < L_SUBFRAME) {
+		/* the delay is shorter than a subframe: the newest zone is reused twice */
+		word32_t error = excitationErrorOfZone(excitationError[0], adaptativeCodebookGain);
+		if (error > worst) {
+			worst = error;
+		}
+		error = excitationErrorOfZone(error, adaptativeCodebookGain);
+		if (error > worst) {
+			worst = error;
+		}
+	} else {
+		for (i=excitationErrorZone[intPitchDelay-L_SUBFRAME]; i<=excitationErrorZone[intPitchDelay-1]; i++) {
+			word32_t error = excitationErrorOfZone(excitationError[i], adaptativeCodebookGain);
+			if (error > worst) {
+				worst = error;
+			}
+		}
+	}
+	for (i=3; i>=1; i--) {
+		excitationError[i] = excitationError[i-1];
+	}
+	excitationError[0] = worst;
+}
+
 /*****************************************************************************/
 /* initBcg729EncoderChannel : create context structure and initialise it     */
 /*    return value :                                                         */
@@ -54,6 +138,7 @@ static const word16_t previousLSPInitialValues[NB_LSP_COEFF] = {30000, 26000, 21
 /*****************************************************************************/
 bcg729EncoderChannelContextStruct *initBcg729EncoderChannel(uint8_t enableVAD)
 {
+	int i;
 	/* create the context structure */
 	bcg729EncoderChannelContextStruct *encoderChannelContext = malloc(sizeof(bcg729EncoderChannelContextStruct));
 	memset(encoderChannelContext, 0, sizeof(bcg729EncoderChannelContextStruct));
@@ -68,6 +153,9 @@ bcg729EncoderChannelContextStruct *initBcg729EncoderChannel(uint8_t enableVAD)
 	memset(encoderChannelContext->excitationVector, 0, L_PAST_EXCITATION*sizeof(word16_t)); /* set to zero values of previous excitation vector */
 	memset(encoderChannelContext->targetSignal, 0, NB_LSP_COEFF*sizeof(word16_t)); /* set to zero values filter memory for the targetSignal computation */
 	encoderChannelContext->lastQuantizedAdaptativeCodebookGain = O2_IN_Q14; /* quantized gain is initialized at his minimum value: 0.2 */
+	for (i=0; i<4; i++) { /* taming procedure: the excitation error starts at 1 in Q14 */
+		encoderChannelContext->excitationError[i] = 16384;
+	}
 	if (enableVAD == 1) {
 		encoderChannelContext->VADChannelContext = initBcg729VADChannel();
 		encoderChannelContext->DTXChannelContext = initBcg729DTXChannel();
@@ -156,6 +244,8 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, con
 	/*********** VAD *****************/
 	if (encoderChannelContext->VADChannelContext != NULL) { /* if VAD is not enable, no context */
 		uint8_t VADflag = 1;
+		word16_t noiseAdaptativeCodebookGains[2] = {0, 0}; /* in Q14, pitch gains of the subframes of a noise frame */
+		int16_t noiseIntPitchDelays[2] = {L_SUBFRAME+1, L_SUBFRAME+1}; /* pitch delays of the subframes of a noise frame */
 		/* update DTX context */
 		updateDTXContext(encoderChannelContext->DTXChannelContext, noLagAutoCorrelationCoefficients, autoCorrelationCoefficientsScale);
 
@@ -168,10 +258,13 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, con
 		VADflag = bcg729_vad(encoderChannelContext->VADChannelContext, reflectionCoefficients[1], LSFCoefficients, autoCorrelationCoefficients, autoCorrelationCoefficientsScale, encoderChannelContext->signalCurrentFrame);
 
 		/* call encodeSIDFrame even if it is a voice frame as it will update DTXContext with current VADflag : TODO : move updateDTXContext in the encodeSIDFrame as part of the update is performed in it anyway */
-		encodeSIDFrame(encoderChannelContext->DTXChannelContext,  encoderChannelContext->previousLSPCoefficients, encoderChannelContext->previousqLSPCoefficients, VADflag, encoderChannelContext->previousqLSF, &(encoderChannelContext->excitationVector[L_PAST_EXCITATION]), qLPCoefficients, bitStream, bitStreamLength);
+		encodeSIDFrame(encoderChannelContext->DTXChannelContext,  encoderChannelContext->previousLSPCoefficients, encoderChannelContext->previousqLSPCoefficients, VADflag, encoderChannelContext->previousqLSF, &(encoderChannelContext->excitationVector[L_PAST_EXCITATION]), qLPCoefficients, bitStream, bitStreamLength, noiseAdaptativeCodebookGains, noiseIntPitchDelays);
 
 		if (VADflag == 0 ) { /* NOISE frame has been encoded */
 			word16_t residualSignal[L_FRAME];
+			/* taming procedure: the noise excitation updates the accumulated error too, as in the ITU code */
+			updateExcitationError(encoderChannelContext->excitationError, noiseAdaptativeCodebookGains[0], noiseIntPitchDelays[0]);
+			updateExcitationError(encoderChannelContext->excitationError, noiseAdaptativeCodebookGains[1], noiseIntPitchDelays[1]);
 			/* update encoder context : generate weighted signal */
 			/*** Compute the weighted Quantized LP Coefficients according to spec A3.3.3 ***/
 			/*  weightedqLPCoefficients[0] = qLPCoefficients[0]*Gamma^(i+1) (i=0..9) with Gamma = 0.75 in Q15 */
@@ -301,6 +394,7 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, con
 		word16_t convolvedFixedCodebookVector[L_SUBFRAME]; /* in Q12 */
 		word16_t quantizedAdaptativeCodebookGain; /* in Q14 */
 		word16_t quantizedFixedCodebookGain; /* in Q1 */
+		uint8_t tamingFlag; /* set to 1 if the taming procedure limits the pitch gain of this subframe */
 
 		memset(impulseResponseBuffer, 0, (NB_LSP_COEFF)*sizeof(word16_t)); /* set the past values to zero */
 		synthesisFilter(impulseResponseInput, &(weightedqLPCoefficients[LPCoefficientsIndex]), &(impulseResponseBuffer[NB_LSP_COEFF]));
@@ -323,6 +417,13 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, con
 		synthesisFilter(&(encoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(weightedqLPCoefficients[LPCoefficientsIndex]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]));
 
 		adaptativeCodebookGain = computeAdaptativeCodebookGain(&(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]), &gainQuantizationXy, &gainQuantizationYy); /* gain in Q14 */
+
+		/* taming procedure of the ITU code: limit the pitch gain when the accumulated error of the adaptative codebook contribution could grow */
+		/* without it, a stationary signal such as a tone keeps the pitch gain near 1.2 and the excitation of the decoder grows until its synthesis overflows */
+		tamingFlag = tamingNeeded(encoderChannelContext->excitationError, intPitchDelay, fracPitchDelay);
+		if (tamingFlag == 1 && adaptativeCodebookGain > O95_IN_Q14) {
+			adaptativeCodebookGain = O95_IN_Q14;
+		}
 		
 		/* increase parameters index and compute P0 if needed */
 		parametersIndex++;
@@ -338,7 +439,7 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, con
 
 		/*** gains Quantization ***/
 		gainQuantization(encoderChannelContext, &(encoderChannelContext->targetSignal[NB_LSP_COEFF]), &(filteredAdaptativeCodebookVector[NB_LSP_COEFF]), convolvedFixedCodebookVector, fixedCodebookVector, gainQuantizationXy, gainQuantizationYy,
-			&quantizedAdaptativeCodebookGain, &quantizedFixedCodebookGain, &(parameters[parametersIndex]), &(parameters[parametersIndex+1]));
+			&quantizedAdaptativeCodebookGain, &quantizedFixedCodebookGain, &(parameters[parametersIndex]), &(parameters[parametersIndex+1]), tamingFlag);
 		parametersIndex+=2;
 		
 		/*** subframe basis indexes and memory updates ***/
@@ -353,6 +454,9 @@ void bcg729Encoder(bcg729EncoderChannelContextStruct *encoderChannelContext, con
 			encoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex + i] = (word16_t)(SATURATE(PSHR(ADD32(MULT16_16(encoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex + i], quantizedAdaptativeCodebookGain),
 											MULT16_16(fixedCodebookVector[i], quantizedFixedCodebookGain)), 14), MAXINT16)); /* result in Q0 */
 		}
+
+		/* taming procedure: update the accumulated error with the quantized pitch gain in Q14 */
+		updateExcitationError(encoderChannelContext->excitationError, quantizedAdaptativeCodebookGain, intPitchDelay);
 
 		/* update targetSignal memory as in spec A.3.10 */
 		quantizedAdaptativeCodebookGain = PSHR(quantizedAdaptativeCodebookGain, 1); /* quantizedAdaptativeCodebookGain in Q13 */

@@ -260,7 +260,7 @@ void updateDTXContext(bcg729DTXChannelContextStruct *DTXChannelContext, word32_t
 /*        untransmitted frame)                                                             */
 /*                                                                                         */
 /*******************************************************************************************/
-void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *previousLSPCoefficients, word16_t *previousqLSPCoefficients,  uint8_t VADflag, word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF], word16_t *excitationVector, word16_t *qLPCoefficients, uint8_t *bitStream, uint8_t *bitStreamLength) {
+void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *previousLSPCoefficients, word16_t *previousqLSPCoefficients,  uint8_t VADflag, word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF], word16_t *excitationVector, word16_t *qLPCoefficients, uint8_t *bitStream, uint8_t *bitStreamLength, word16_t *adaptativeCodebookGains, int16_t *intPitchDelays) {
 
 	int i;
 	word32_t summedAutocorrelationCoefficients[NB_LSP_COEFF+1];
@@ -407,7 +407,7 @@ void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext, word16_t *
 	}
 
 	/* update excitation vector */
-	computeComfortNoiseExcitationVector(DTXChannelContext->smoothedSIDGain, &(DTXChannelContext->pseudoRandomSeed), excitationVector);
+	computeComfortNoiseExcitationVector(DTXChannelContext->smoothedSIDGain, &(DTXChannelContext->pseudoRandomSeed), excitationVector, adaptativeCodebookGains, intPitchDelays);
 
 	/* Interpolate qLSP and update the previousqLSP buffer */
 	interpolateqLSP(previousqLSPCoefficients, DTXChannelContext->qLSPCoefficients, interpolatedqLSP); /* in case of untransmitted frame, use qLSP generated for the last transmitted one */

@@ -1,7 +1,7 @@
 check_PROGRAMS=adaptativeCodebookSearchTest computeAdaptativeCodebookGainTest computeLPTest computeWeightedSpeechTest decodeAdaptativeCodeVectorTest decodeFixedCodeVectorTest decodeGainsTest decodeLSPTest \
        decoderTest encoderTest decoderMultiChannelTest encoderMultiChannelTest findOpenLoopPitchDelayTest fixedCodebookSearchTest g729FixedPointMathTest gainQuantizationTest interpolateqLSPAndConvert2LPTest \
        LP2LSPConversionTest LPSynthesisFilterTest LSPQuantizationTest postFilterTest postProcessingTest preProcessingTest computeNoiseExcitationTest CNGdecoderTest CNGRFC3389decoderTest encoderVADTest \
-       decoderOverflowTest
+       decoderOverflowTest encoderTamingTest
 util_src= \
 	$(top_srcdir)/test/src/testUtils.c \
 	$(top_srcdir)/test/src/testUtils.h
@@ -36,9 +36,11 @@ computeNoiseExcitationTest_SOURCES=$(top_srcdir)/test/src/computeNoiseExcitation
 encoderVADTest_SOURCES=$(top_srcdir)/test/src/encoderVADTest.c $(util_src)
 decoderOverflowTest_SOURCES=$(top_srcdir)/test/src/decoderOverflowTest.c
 decoderOverflowTest_LDADD=$(LDADD) -lm
+encoderTamingTest_SOURCES=$(top_srcdir)/test/src/encoderTamingTest.c
+encoderTamingTest_LDADD=$(LDADD) -lm
 
 # self-contained tests, run by make check
-TESTS=decoderOverflowTest
+TESTS=decoderOverflowTest encoderTamingTest
 
 LDADD=	$(top_builddir)/src/libbcg729.la 
 AM_CPPFLAGS=-I$(top_srcdir)/include/ -I$(top_srcdir)/src/

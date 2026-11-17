@@ -52,7 +52,7 @@ void initGainQuantization(bcg729EncoderChannelContextStruct *encoderChannelConte
 /*                                                                           */
 /*****************************************************************************/
 void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, word16_t targetSignal[], word16_t filteredAdaptativeCodebookVector[], word16_t convolvedFixedCodebookVector[], word16_t fixedCodebookVector[], word64_t xy64, word64_t yy64,
-					word16_t *quantizedAdaptativeCodebookGain, word16_t *quantizedFixedCodebookGain, uint16_t *gainCodebookStage1, uint16_t *gainCodebookStage2)
+					word16_t *quantizedAdaptativeCodebookGain, word16_t *quantizedFixedCodebookGain, uint16_t *gainCodebookStage1, uint16_t *gainCodebookStage2, uint8_t tamingFlag)
 {
 	int i,j;
 	word64_t xz64=0, yz64=0, zz64=0;
@@ -170,6 +170,11 @@ void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, 
 		}
 	}
 
+	/* taming procedure of the ITU code: limit the pitch gain the preselection starts from */
+	if (tamingFlag == 1 && bestAdaptativeCodebookGain > O94_IN_Q9) {
+		bestAdaptativeCodebookGain = O94_IN_Q9;
+	}
+
 	/*** Compute the predicted gain as in spec 3.9.1 eq71 in Q6 ***/
 	predictedFixedCodebookGain = (word16_t)(SHR32(MACodeGainPrediction(encoderChannelContext->previousGainPredictionError, fixedCodebookVector), 12)); /* in Q16 -> Q4 range [3,1830] */
 
@@ -200,6 +205,11 @@ void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, 
 			word16_t gp =  ADD16(GACodebook[i+indexBaseGa][0], GBCodebook[j+indexBaseGb][0]); /* result in Q14 */
 			word16_t gamma =  ADD16(GACodebook[i+indexBaseGa][1], GBCodebook[j+indexBaseGb][1]); /* result in Q3.12 (range [0.185, 5.05])*/
 			word32_t gc = MULT16_16_Q14(gamma, predictedFixedCodebookGain); /* gamma in Q12, predictedFixedCodebookGain in Q4 -> Q16 -14 -> Q2 */
+
+			/* taming procedure of the ITU code: no pitch gain of 1 or more */
+			if (tamingFlag == 1 && gp >= O9999_IN_Q14) {
+				continue;
+			}
 			
 			/* compute E as in eq63 (first term excluded) */
 			word64_t acc = MULT32_32(MULT16_16(gp, gp), yy); /* acc = gp^2*yy  gp in Q14, yy in Q0 -> acc in Q28 */
@@ -216,6 +226,14 @@ void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, 
 				*quantizedFixedCodebookGain = (word16_t)SHR(gc, 1);
 			}
 		}
+	}
+
+	/* taming excluded every candidate: take the first preselected ones, as the ITU code does */
+	if (distanceMin == MAXINT64) {
+		indexGa = indexBaseGa;
+		indexGb = indexBaseGb;
+		*quantizedAdaptativeCodebookGain = ADD16(GACodebook[indexGa][0], GBCodebook[indexGb][0]);
+		*quantizedFixedCodebookGain = (word16_t)SHR(MULT16_16_Q14(ADD16(GACodebook[indexGa][1], GBCodebook[indexGb][1]), predictedFixedCodebookGain), 1);
 	}
 
 	/* update the previous gain prediction error */

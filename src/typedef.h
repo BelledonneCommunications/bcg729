@@ -159,6 +159,7 @@ struct bcg729EncoderChannelContextStruct_struct {
 			154-> 154+L_FRAME-1 : the current frame adaptative Code Vector first used to compute then the excitation vector */
 	word16_t targetSignal[NB_LSP_COEFF+L_SUBFRAME]; /* in Q0, buffer holding the target signal (x[n]) as in spec A.3.6, the first NB_LSP_COEFF values are memory from previous subframe used in filtering(computed according to spec A.3.10), the following values are the target signal for current subframe */
 	word16_t lastQuantizedAdaptativeCodebookGain; /* in Q14, the quantized adaptive codebook gain from previous subframe */
+	word32_t excitationError[4]; /* in Q14, taming procedure of the ITU code: the accumulated potential error of the adaptative codebook contribution in 4 zones of pitch delay */
 
 	/*** buffer used in preProcessing ***/
 	word16_t inputX0, inputX1;
@@ -207,6 +208,11 @@ struct bcg729EncoderChannelContextStruct_struct {
 #define O7_IN_Q12 2867
 /* 0.2 in Q14 */
 #define O2_IN_Q14 3277
+/* taming procedure of the ITU code (TAMING.C, QUA_GAIN.C): maximum pitch gains when taming is needed and the threshold of the accumulated error */
+#define O95_IN_Q14 15564
+#define O94_IN_Q9 481
+#define O9999_IN_Q14 16383
+#define TAMING_ERROR_THRESHOLD 983040000
 /* 0.2 in Q15 */
 #define O2_IN_Q15 6554
 
