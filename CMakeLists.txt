@@ -72,6 +72,7 @@ add_subdirectory(include)
 add_subdirectory(src)
 if(ENABLE_UNIT_TESTS AND NOT WIN32)
 	# Deactivated on Windows because of symbol export issues (TODO: fix that)
+	enable_testing()
 	add_subdirectory(test)
 endif()
 
