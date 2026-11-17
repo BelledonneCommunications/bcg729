@@ -29,11 +29,15 @@
 /*      -(i/o) recontructedSpeech: 50 values in Q0                           */
 /*             [-NB_LSP_COEFF, -1] of previous values as input               */
 /*             [0, L_SUBFRAME[ as output                                     */
+/*    return value: 1 if an output sample had to be saturated on 16 bits,   */
+/*      the caller then scales the excitation down and filters again as the */
+/*      ITU code does, 0 otherwise                                           */
 /*                                                                           */
 /*****************************************************************************/
-void LPSynthesisFilter (word16_t *excitationVector, word16_t *LPCoefficients, word16_t *reconstructedSpeech)
+uint8_t LPSynthesisFilter (word16_t *excitationVector, word16_t *LPCoefficients, word16_t *reconstructedSpeech)
 {
 	int i;
+	uint8_t overflow = 0;
 	/* compute excitationVector[i] - Sum0-9(LPCoefficients[j]*reconstructedSpeech[i-j]) */
 	for (i=0; i<L_SUBFRAME; i++) {
 		word32_t acc = SSHL(excitationVector[i],12); /* acc get the first term of the sum, in Q12 (excitationVector is in Q0)*/
@@ -41,7 +45,11 @@ void LPSynthesisFilter (word16_t *excitationVector, word16_t *LPCoefficients, wo
 		for (j=0; j<NB_LSP_COEFF; j++) {
 			acc = MSU16_16(acc, LPCoefficients[j], reconstructedSpeech[i-j-1]);
 		}
-		reconstructedSpeech[i] = (word16_t)SATURATE(PSHR(acc, 12), MAXINT16); /* shift right acc to get it back in Q0 and check overflow on 16 bits */
+		acc = PSHR(acc, 12); /* shift right acc to get it back in Q0 */
+		if (acc > MAXINT16 || acc < -(MAXINT16+1)) { /* check overflow on 16 bits */
+			overflow = 1;
+		}
+		reconstructedSpeech[i] = (word16_t)SATURATE(acc, MAXINT16);
 	}
-	return;
+	return overflow;
 }

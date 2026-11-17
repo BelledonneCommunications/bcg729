@@ -34,9 +34,10 @@ void initGainQuantization(bcg729EncoderChannelContextStruct *encoderChannelConte
 /*      -(o) quantizedFixedCodebookGain : in Q1                              */
 /*      -(o) gainCodebookStage1 : GA parameter value (3 bits)                */
 /*      -(o) gainCodebookStage2 : GB parameter value (4 bits)                */
+/*      -(i) tamingFlag : 1 if the taming procedure limits the pitch gain    */
 /*                                                                           */
 /*****************************************************************************/
 void gainQuantization(bcg729EncoderChannelContextStruct *encoderChannelContext, word16_t targetSignal[], word16_t filteredAdaptativeCodebookVector[], word16_t convolvedFixedCodebookVector[], word16_t fixedCodebookVector[], word64_t Xy64, word64_t Yy64,
-					word16_t *quantizedAdaptativeCodebookGain, word16_t *quantizedFixedCodebookGain, uint16_t *gainCodebookStage1, uint16_t *gainCodebookStage2);
+					word16_t *quantizedAdaptativeCodebookGain, word16_t *quantizedFixedCodebookGain, uint16_t *gainCodebookStage1, uint16_t *gainCodebookStage2, uint8_t tamingFlag);
 
 #endif /* ifndef GAINQUANTIZATION_H */

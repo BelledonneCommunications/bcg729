@@ -50,6 +50,7 @@
 #define MAXIMUM_INT_PITCH_DELAY 143
 /* past excitation vector length: Maximum Pitch Delay (143 + 1(fractionnal part)) + Interpolation Windows Length (10) */
 #define L_PAST_EXCITATION 154
+#define L_INTERPOL 11 /* the interpolation window of the past excitation: L_PAST_EXCITATION is MAXIMUM_INT_PITCH_DELAY+L_INTERPOL */
 
 /* rearrange coefficient gap in Q13 */
 /* GAP1 is 0.0012, GAP2 is 0.0006 */

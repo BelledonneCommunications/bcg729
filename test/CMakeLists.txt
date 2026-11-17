@@ -107,6 +107,14 @@ target_link_libraries(computeNoiseExcitationTest ${BCG729_LIBRARY})
 add_executable(encoderVADTest src/encoderVADTest.c ${UTIL_SRC})
 target_link_libraries(encoderVADTest ${BCG729_LIBRARY})
 
+# self-contained tests, run by ctest
+add_executable(decoderOverflowTest src/decoderOverflowTest.c)
+target_link_libraries(decoderOverflowTest ${BCG729_LIBRARY} m)
+add_test(NAME decoderOverflowTest COMMAND decoderOverflowTest)
+add_executable(encoderTamingTest src/encoderTamingTest.c)
+target_link_libraries(encoderTamingTest ${BCG729_LIBRARY} m)
+add_test(NAME encoderTamingTest COMMAND encoderTamingTest)
+
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/testCampaign.cmake DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/ )
 file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/testCampaign.cmake ${CMAKE_CURRENT_BINARY_DIR}/testCampaign )
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/testCampaignAll.cmake ${CMAKE_CURRENT_BINARY_DIR}/testCampaignAll)

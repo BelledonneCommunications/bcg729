@@ -40,6 +40,21 @@
 static const word16_t previousqLSPInitialValues[NB_LSP_COEFF] = {30000, 26000, 21000, 15000, 8000, 0, -8000,-15000,-21000,-26000}; /* in Q0.15 the initials values for the previous qLSP buffer */
 
 /*****************************************************************************/
+/* scaleDownExcitationVector : divide the past and current excitation by 4,  */
+/*    as the ITU code does when the LP synthesis filter overflowed           */
+/*    parameters:                                                            */
+/*      -(i/o) excitationVector: L_PAST_EXCITATION + L_FRAME values in Q0    */
+/*                                                                           */
+/*****************************************************************************/
+static void scaleDownExcitationVector(word16_t excitationVector[])
+{
+	int i;
+	for (i=0; i<L_PAST_EXCITATION + L_FRAME; i++) {
+		excitationVector[i] = SHR(excitationVector[i], 2);
+	}
+}
+
+/*****************************************************************************/
 /* initBcg729DecoderChannel : create context structure and initialise it     */
 /*    return value :                                                         */
 /*      - the decoder channel context data                                   */
@@ -170,10 +185,12 @@ void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, con
 		for (subframeIndex=0; subframeIndex<L_FRAME; subframeIndex+=L_SUBFRAME) {
 			/* reconstruct speech using LP synthesis filter spec 4.1.6 eq77 */
 			/* excitationVector in Q0, LP in Q12, recontructedSpeech in Q0 -> +NB_LSP_COEFF on the index of this one because the first NB_LSP_COEFF elements store the previous frame filter output */
-			LPSynthesisFilter(&(decoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(LP[LPCoefficientsIndex]), &(decoderChannelContext->reconstructedSpeech[NB_LSP_COEFF+subframeIndex]) );
-
-			/* NOTE: ITU code check for overflow after LP Synthesis Filter computation and if it happened, divide excitation buffer by 2 and recompute the LP Synthesis Filter */
-			/*	here, possible overflows are managed directly inside the Filter by saturation at MAXINT16 on each result */
+			if (LPSynthesisFilter(&(decoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(LP[LPCoefficientsIndex]), &(decoderChannelContext->reconstructedSpeech[NB_LSP_COEFF+subframeIndex]) )) {
+				/* in case of overflow in the synthesis, as the ITU code does: scale down the whole excitation buffer by 4 and redo the synthesis */
+				/* saturating the output instead feeds the saturated samples back into the filter, which can then stay saturated for as long as the input is stationary */
+				scaleDownExcitationVector(decoderChannelContext->excitationVector);
+				LPSynthesisFilter(&(decoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(LP[LPCoefficientsIndex]), &(decoderChannelContext->reconstructedSpeech[NB_LSP_COEFF+subframeIndex]) );
+			}
 
 			/* postFilter */
 			postFilter(decoderChannelContext, &(LP[LPCoefficientsIndex]), /* select the LP coefficients for this subframe, use last frame intPitchDelay */
@@ -281,10 +298,12 @@ void bcg729Decoder(bcg729DecoderChannelContextStruct *decoderChannelContext, con
 
 		/* reconstruct speech using LP synthesis filter spec 4.1.6 eq77 */
 		/* excitationVector in Q0, LP in Q12, recontructedSpeech in Q0 -> +NB_LSP_COEFF on the index of this one because the first NB_LSP_COEFF elements store the previous frame filter output */
-		LPSynthesisFilter(&(decoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(LP[LPCoefficientsIndex]), &(decoderChannelContext->reconstructedSpeech[NB_LSP_COEFF+subframeIndex]) );
-
-		/* NOTE: ITU code check for overflow after LP Synthesis Filter computation and if it happened, divide excitation buffer by 2 and recompute the LP Synthesis Filter */
-		/*	here, possible overflows are managed directly inside the Filter by saturation at MAXINT16 on each result */ 
+		if (LPSynthesisFilter(&(decoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(LP[LPCoefficientsIndex]), &(decoderChannelContext->reconstructedSpeech[NB_LSP_COEFF+subframeIndex]) )) {
+			/* in case of overflow in the synthesis, as the ITU code does: scale down the whole excitation buffer by 4 and redo the synthesis */
+			/* saturating the output instead feeds the saturated samples back into the filter, which can then stay saturated for as long as the input is stationary */
+			scaleDownExcitationVector(decoderChannelContext->excitationVector);
+			LPSynthesisFilter(&(decoderChannelContext->excitationVector[L_PAST_EXCITATION + subframeIndex]), &(LP[LPCoefficientsIndex]), &(decoderChannelContext->reconstructedSpeech[NB_LSP_COEFF+subframeIndex]) );
+		}
 
 		/* postFilter */
 		postFilter(decoderChannelContext, &(LP[LPCoefficientsIndex]), /* select the LP coefficients for this subframe */

@@ -53,7 +53,9 @@ void updateDTXContext(bcg729DTXChannelContextStruct *DTXChannelContext, word32_t
 /*        transmitted                                                                      */
 /*   -(o) bitStreamLength : length of bitStream buffer to be transmitted (2 for SID, 0 for */
 /*        untransmitted frame)                                                             */
+/*   -(o) adaptativeCodebookGains, intPitchDelays : pitch gain in Q14 and delay of the 2   */
+/*        subframes of a noise frame, for the taming procedure                             */
 /*                                                                                         */
 /*******************************************************************************************/
-void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext,  word16_t *previousLSPCoefficients, word16_t *previousqLSPCoefficients,  uint8_t VADflag, word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF],  word16_t *excitationVector, word16_t *qLPCoefficients, uint8_t *bitStream, uint8_t *bitStreamLength);
+void encodeSIDFrame(bcg729DTXChannelContextStruct *DTXChannelContext,  word16_t *previousLSPCoefficients, word16_t *previousqLSPCoefficients,  uint8_t VADflag, word16_t previousqLSF[MA_MAX_K][NB_LSP_COEFF],  word16_t *excitationVector, word16_t *qLPCoefficients, uint8_t *bitStream, uint8_t *bitStreamLength, word16_t *adaptativeCodebookGains, int16_t *intPitchDelays);
 #endif /* ifndef DTX_H */

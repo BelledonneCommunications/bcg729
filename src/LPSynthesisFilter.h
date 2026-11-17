@@ -26,7 +26,10 @@
 /*      -(i/o) recontructedSpeech: 50 values in Q0                           */
 /*             [-NB_LSP_COEFF, -1] of previous values as input               */
 /*             [0, L_SUBFRAME[ as output                                     */
+/*    return value: 1 if an output sample had to be saturated on 16 bits,   */
+/*      the caller then scales the excitation down and filters again as the */
+/*      ITU code does, 0 otherwise                                           */
 /*                                                                           */
 /*****************************************************************************/
-void LPSynthesisFilter (word16_t *excitationVector, word16_t *LPCoefficients, word16_t *reconstructedSpeech);
+uint8_t LPSynthesisFilter (word16_t *excitationVector, word16_t *LPCoefficients, word16_t *reconstructedSpeech);
 #endif /* ifndef LPSYNTHESISFILTER_H */

@@ -87,7 +87,7 @@ int main(int argc, char *argv[] )
 		}
 
 		/* call the tested function: output will replace the input in the buffer */
-		computeComfortNoiseExcitationVector(targetGain, &randomGeneratorSeed, &(inputBuffer[L_PAST_EXCITATION]));
+		computeComfortNoiseExcitationVector(targetGain, &randomGeneratorSeed, &(inputBuffer[L_PAST_EXCITATION]), NULL, NULL);
 
 		/* write the output to the output file */
 		//fprintf(fpOutput,"%d", (int16_t)randomGeneratorSeed);

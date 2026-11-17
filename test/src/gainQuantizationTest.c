@@ -116,7 +116,7 @@ int main(int argc, char *argv[] )
 		
 		/* call the tested funtion */
 		gainQuantization(encoderChannelContext, targetSignal, filteredAdaptativeCodebookVector, convolvedFixedCodebookVector, fixedCodebookVector, xy, yy,
-			&quantizedAdaptativeCodebookGain, &quantizedFixedCodebookGain, &gainCodebookStage1, &gainCodebookStage2);
+			&quantizedAdaptativeCodebookGain, &quantizedFixedCodebookGain, &gainCodebookStage1, &gainCodebookStage2, 0); /* the patterns of this bloc are computed without taming */
 
 
 		/* write the output to the output file : fixedCodebookParameter, fixedCodebookPulsesSigns, fixedCodebookVector */

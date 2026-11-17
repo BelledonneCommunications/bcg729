@@ -28,7 +28,13 @@
 /*****************************************************************************/
 bcg729CNGChannelContextStruct *initBcg729CNGChannel();
 
-void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGeneratorSeed, word16_t *excitationVector);
+/*****************************************************************************/
+/* computeComfortNoiseExcitationVector : the excitation of a noise frame     */
+/*    spec B4.4 and B4.5; adaptativeCodebookGains (Q14) and intPitchDelays   */
+/*    receive the pitch gain and delay of the 2 subframes for the taming     */
+/*    procedure of the encoder, both may be NULL                             */
+/*****************************************************************************/
+void computeComfortNoiseExcitationVector(word16_t targetGain, uint16_t *randomGeneratorSeed, word16_t *excitationVector, word16_t *adaptativeCodebookGains, int16_t *intPitchDelays);
 /*******************************************************************************************/
 /* decodeSIDframe : as is spec B4.4 and B4.5                                               */
 /*    first check if we have a SID frame or a missing/untransmitted frame                  */
